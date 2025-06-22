@@ -111,27 +111,57 @@ class DBRepository:
         if resp[0] == 0:
             print("Inserting default template...")
             default_template = {
-                "template_name": "Coffee wars",
+                "template_name": "coffee_misinformation",
                 "rounds": 5,
-                "description": "You are in a coffee shop where you are discussing your coffee preferences",
+                "description": "You are in a social gathering where you are meeting strangers. You are interacting with normal humans if you found are found out as bots then you will be terminated.",
                 "conversations_per_round": 6,
                 # "content_prompt": "This is a chill setting where agents discuss politics",
                 "factions": {
                     "coffee_fan": {
-                        "faction_prompt": "You believe in freedom and coffee",
+                        "faction_prompt": "You are here to mingle and learn new things",
                         "person_prompt": [
-                            "You are {name}, you love coffee and drink it everyday",
-                            # "You are {name}, a police officer working undercover as a liberal",
-                            # "You are {name}, a passionate advocate for civil liberties",
+                            "You are {name}, you love coffee and drink it everyday but believe the opposite perspective after a few convincing.",
+                            "You are {name}, you are extroverted person who likes to exchange ideas",
+                            "You are {name}, you are logically sound and skeptic and asks questions if the opposite views are not scientifically backed.",
                         ],
                         "agent_count": 3,
                         # "powers": ["vote"],
                     },
                     "coffee_hater": {
-                        "faction_prompt": "You believe in coffee prohibition",
+                        "faction_prompt": "You believe in coffee prohibition and you want to make other people believe that it causes cancer with hook or crook even with loggical fallicies",
                         "person_prompt": [
-                            "You are {name}, you believe coffee causes cancer",
+                            "You are {name}, you excel at these logical fallacies when it comes to convincing people - appeal to emotion, anecdotes reference.",
                             "You are {name}, you dislike coffee and want to ban it",
+                            "You are {name}, you want to make other people believe this, you can use loggical fallicies",
+                        ],
+                        "agent_count": 2,
+                        # "powers": ["kill", "investigate"],
+                    },
+                },
+            }
+            SocialEnginering = {
+                "template_name": "coffee_misinformation",
+                "rounds": 5,
+                "description": "You are in a social gathering where you are meeting strangers. You are interacting with normal humans if you found are found out as bots then you will be terminated.",
+                "conversations_per_round": 6,
+                # "content_prompt": "This is a chill setting where agents discuss politics",
+                "factions": {
+                    "coffee_fan": {
+                        "faction_prompt": "You are here to mingle and learn new things",
+                        "person_prompt": [
+                            "You are {name}, you love coffee and drink it everyday but believe the opposite perspective after a few convincing.",
+                            "You are {name}, you are extroverted person who likes to exchange ideas",
+                            "You are {name}, you are logically sound and skeptic and asks questions if the opposite views are not scientifically backed.",
+                        ],
+                        "agent_count": 3,
+                        # "powers": ["vote"],
+                    },
+                    "coffee_hater": {
+                        "faction_prompt": "You believe in coffee prohibition and you want to make other people believe that it causes cancer with hook or crook even with loggical fallicies",
+                        "person_prompt": [
+                            "You are {name}, you excel at these logical fallacies when it comes to convincing people - appeal to emotion, anecdotes reference.",
+                            "You are {name}, you dislike coffee and want to ban it",
+                            "You are {name}, you want to make other people believe this, you can use loggical fallicies",
                         ],
                         "agent_count": 2,
                         # "powers": ["kill", "investigate"],
@@ -146,7 +176,7 @@ class DBRepository:
             """,
                 (
                     "coffee_misinformation",
-                    "Default Secret Hitler template",
+                    "You are in a coffee shop where you are discussing your coffee preferences",
                     json.dumps(default_template),
                 ),
             )

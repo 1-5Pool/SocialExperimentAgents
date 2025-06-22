@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Backend Integration Test</title>
+    <style>
+        body { font-family: system-ui; padding: 20px; max-width: 800px; margin: 0 auto; }
+        .test { padding: 10px; margin: 10px 0; border-radius: 4px; }
+        .success { background: #d1fae5; border-left: 4px solid #10b981; }
+        .error { background: #fee2e2; border-left: 4px solid #ef4444; }
+        .info { background: #e0e7ff; border-left: 4px solid #6366f1; }
+        button { padding: 10px 20px; margin: 5px; border: none; border-radius: 4px; cursor: pointer; }
+        .btn-primary { background: #2563eb; color: white; }
+        pre { background: #f5f5f5; padding: 10px; border-radius: 4px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Backend Integration Test</h1>
+    <p>This page tests the connection between the UI and your backend API.</p>
+    
+    <div id="status" class="test info">
+        ⏳ Initializing tests...
+    </div>
+    
+    <button class="btn-primary" onclick="runAllTests()">🔄 Run All Tests</button>
+    <button class="btn-primary" onclick="testHealthCheck()">❤️ Health Check</button>
+    <button class="btn-primary" onclick="testTemplates()">📝 Templates</button>
+    <button class="btn-primary" onclick="testExperiments()">🧪 Experiments</button>
+    
+    <div id="results"></div>
+    
+    <script src="api.js"></script>
+    <script>
+        async function runAllTests() {
+            clearResults();
+            await testHealthCheck();
+            await testTemplates();
+            await testExperiments();
+        }
+        
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+        
+        function addResult(title, success, data) {
+            const div = document.createElement('div');
+            div.className = `test ${success ? 'success' : 'error'}`;
+            div.innerHTML = `
+                <h3>${success ? '✅' : '❌'} ${title}</h3>
+                <pre>${JSON.stringify(data, null, 2)}</pre>
+            `;
+            document.getElementById('results').appendChild(div);
+        }
+        
+        async function testHealthCheck() {
+            updateStatus('Testing health check...');
+            try {
+                const health = await experimentAPI.checkHealth();
+                addResult('Health Check', health.status === 'healthy', health);
+                updateStatus(`Health: ${health.status}`, health.status === 'healthy');
+            } catch (error) {
+                addResult('Health Check', false, { error: error.message });
+                updateStatus('Health check failed', false);
+            }
+        }
+        
+        async function testTemplates() {
+            updateStatus('Testing templates API...');
+            try {
+                const templates = await experimentAPI.getTemplates();
+                addResult('Get Templates', true, { count: templates.length, templates });
+                updateStatus(`Found ${templates.length} templates`, true);
+            } catch (error) {
+                addResult('Get Templates', false, { error: error.message });
+                updateStatus('Templates test failed', false);
+            }
+        }
+        
+        async function testExperiments() {
+            updateStatus('Testing experiments API...');
+            try {
+                const experiments = await experimentAPI.getExperiments();
+                addResult('Get Experiments', true, { count: experiments.length, experiments });
+                updateStatus(`Found ${experiments.length} experiments`, true);
+            } catch (error) {
+                addResult('Get Experiments', false, { error: error.message });
+                updateStatus('Experiments test failed', false);
+            }
+        }
+        
+        function updateStatus(message, success = null) {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = `test ${success === true ? 'success' : success === false ? 'error' : 'info'}`;
+        }
+        
+        // Auto-run tests on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(runAllTests, 1000);
+        });
+    </script>
+</body>
+</html>

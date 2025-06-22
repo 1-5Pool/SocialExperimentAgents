@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Backend Debug</title>
+</head>
+<body>
+    <h1>Backend Connection Debug</h1>
+    <div id="results"></div>
+    
+    <script>
+        async function testConnection() {
+            const results = document.getElementById('results');
+            
+            try {
+                console.log('Testing backend connection...');
+                const response = await fetch('http://localhost:8000/health');
+                const data = await response.json();
+                
+                results.innerHTML = `
+                    <h2>✅ Backend Connected!</h2>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+                
+                // Test templates
+                const templatesResponse = await fetch('http://localhost:8000/templates');
+                const templates = await templatesResponse.json();
+                
+                results.innerHTML += `
+                    <h2>📝 Templates Available:</h2>
+                    <pre>${JSON.stringify(templates, null, 2)}</pre>
+                `;
+                
+            } catch (error) {
+                results.innerHTML = `
+                    <h2>❌ Connection Failed</h2>
+                    <p>Error: ${error.message}</p>
+                    <p>Make sure backend is running on http://localhost:8000</p>
+                `;
+                console.error('Connection test failed:', error);
+            }
+        }
+        
+        // Test immediately
+        testConnection();
+    </script>
+</body>
+</html>
