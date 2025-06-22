@@ -5,7 +5,7 @@ from math import ceil
 from domain.entities import AgentCount, Conversation, ExperimentResult, Experiment
 from infrastructure.db import DBRepository
 from services.agent.dummy import DummyAgent, DummyModerator
-from services.agent.letta_agent import LettaAgent, DummyModerator
+from services.agent.letta_agent import LettaAgent, LettaModerator
 from services.agent.interface import AgentInterface, ModeratorInterface
 import json
 import faker
@@ -26,7 +26,7 @@ class SimulationService:
 
         self.repo = repo
         self.template_id = template_id
-        self.moderator = moderator or DummyModerator("mod-001")
+        self.moderator = moderator or LettaModerator("mod-001")
         self.faker = faker.Faker()
         # Load template
         template = repo.get_template_by_id(template_id)

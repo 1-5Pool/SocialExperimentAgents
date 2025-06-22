@@ -378,11 +378,11 @@ async def run_experiment(
             )
 
         # Create experiment record in database with "pending" status
-        moderator = DummyModerator("mod-001")
+        # moderator = DummyModerator("mod-001")
         sim = SimulationService(
             repo=repo,
             template_id=request.template_id,
-            moderator=moderator,
+            # moderator=moderator,
             rounds=request.rounds,
             conversations_per_round=request.conversations_per_round,
             max_conversations_per_agent=request.max_conversations_per_agent,

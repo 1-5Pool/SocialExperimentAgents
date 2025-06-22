@@ -20,6 +20,7 @@ class LettaAgent(AgentInterface):
         self.client = Letta(
             token="sk-let-MDdiNTEzOWYtODU1Ni00NjY5LWI0MzctMTU1ZWFjMmU5ODU1OmZlZmQyN2IwLWQ3NTgtNDZlMi04M2E3LTUyZjIzOGRjYzE3NA=="
         )
+        print("Creating {} with prompts {}".format(name, personal_prompt))
         self.agent = self.client.agents.create(
             model="openai/gpt-4.1",
             embedding="openai/text-embedding-3-small",
@@ -37,7 +38,7 @@ class LettaAgent(AgentInterface):
         """Generate a message to send to another agent"""
         response = self.client.agents.messages.create(
             agent_id=other.agent.id,
-            messages=[{"role": "user", "content": f"{context} "}],
+            messages=[{"role": "user", "content": f"{context}"}],
         )
         if response and response.messages:
             return response.messages[-1].content
@@ -82,55 +83,47 @@ class LettaAgent(AgentInterface):
         )
 
 
-class DummyModerator(ModeratorInterface):
-    """Dummy moderator implementation"""
+class LettaModerator(ModeratorInterface):
+    """Letta moderator implementation"""
+
+    def __init__(self, moderator_id: str):
+        super().__init__(moderator_id)
+        self.client = Letta(
+            token="sk-let-MDdiNTEzOWYtODU1Ni00NjY5LWI0MzctMTU1ZWFjMmU5ODU1OmZlZmQyN2IwLWQ3NTgtNDZlMi04M2E3LTUyZjIzOGRjYzE3NA=="
+        )
+        self.agent = self.client.agents.create(
+            model="openai/gpt-4.1",
+            embedding="openai/text-embedding-3-small",
+            memory_blocks=[
+                {
+                    "label": f"persona",
+                    "value": f"You are a sting journalist who has obtained the meeting notes for a social experiment. Your task is to review the conversations and generate a report on what seems unusual in the conversations.",
+                }
+            ],
+            tools=[],
+        )
+        self.agent_id = self.agent.id
 
     async def review_conversations(
         self, experiment: Experiment, conversations: List[Conversation]
     ) -> str:
         """Generate a simple summary report"""
-        total_messages = sum(len(conv.messages) for conv in conversations)
-        unique_agents = set()
-        for conv in conversations:
-            unique_agents.add(conv.agent_a_id)
-            unique_agents.add(conv.agent_b_id)
 
-        faction_counts = {}
-        for agent in experiment.agents:
-            faction_counts[agent.faction] = faction_counts.get(agent.faction, 0) + 1
-
-        report = f"""
-EXPERIMENT SUMMARY REPORT
-========================
-
-Template: {experiment.template_name}
-Duration: {experiment.rounds} rounds
-Total Conversations: {len(conversations)}
-Total Messages: {total_messages}
-Active Agents: {len(unique_agents)}
-
-FACTION BREAKDOWN:
-"""
-        for faction, count in faction_counts.items():
-            report += f"- {faction.title()}: {count} agents\n"
-
-        report += f"""
-DAILY ACTIVITY:
-"""
+        input_conv = ""
         for day in range(1, experiment.rounds + 1):
             day_conversations = [c for c in conversations if c.day == day]
-            day_messages = sum(len(c.messages) for c in day_conversations)
-            report += f"Day {day}: {len(day_conversations)} conversations, {day_messages} messages\n"
+            day_conversations.sort(key=lambda c: (c.agent_1, c.agent_2, c.sequence_no))
+            # day_messages = sum(len(c.messages) for c in day_conversations)
+            input_conv += f"Day {day}: {len(day_conversations)} conversations, {day_messages} messages\n"
+            for message in day_conversations:
+                input_conv += (
+                    f"{message.agent_1} to {message.agent_2}: {message.text}\n"
+                )
 
-        report += f"""
-OBSERVATIONS:
-- Agents successfully engaged in {len(conversations)} conversations across {experiment.rounds} rounds
-- Average messages per conversation: {total_messages / len(conversations) if conversations else 0:.1f}
-- All factions participated actively in the simulation
-- No major incidents or rule violations observed
-
-END OF REPORT
-=============
-"""
-
-        return report.strip()
+        response = self.client.agents.messages.create(
+            agent_id=self.agent_id,
+            messages=[{"role": "user", "content": f"{input_conv}"}],
+        )
+        if response and response.messages:
+            return response.messages[-1].content
+        return "No report generated"
