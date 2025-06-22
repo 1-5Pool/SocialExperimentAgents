@@ -212,7 +212,7 @@ class SimulationService:
                 msg_a = agent_a.send_message_to(agent_b, context)
                 # if len(msg_a) > self.max_message_length:
                 #     msg_a = msg_a[: self.max_message_length]
-                print("{} says to {}: {}".format(agent_a.name, agent_b.name, msg_a))
+                print("{} says to {}: {}\n\n".format(agent_a.name, agent_b.name, msg_a))
                 conv_a = Conversation(
                     self.experiment_id,
                     day,
@@ -228,7 +228,7 @@ class SimulationService:
 
                 # Agent B responds to Agent A
                 msg_b = agent_b.send_message_to(agent_a, f"Responding to: {msg_a}...")
-                print("{} says to {}: {}".format(agent_b.name, agent_a.name, msg_a))
+                print("{} says to {}: {}\n\n".format(agent_b.name, agent_a.name, msg_b))
 
                 if len(msg_b) > self.max_message_length:
                     msg_b = msg_b[: self.max_message_length]
