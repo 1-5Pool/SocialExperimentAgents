@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Multi-Agent Social Dynamics Lab</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
     <style>
@@ -14,16 +15,72 @@
         }
         
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: #f5f5f5;
             color: #333;
             line-height: 1.6;
+            transition: background 0.3s, color 0.3s;
+        }
+        body.dark-mode {
+            background: #18181b;
+            color: #f3f4f6;
         }
         
         .container {
             max-width: 1400px;
             margin: 0 auto;
             padding: 20px;
+        }
+        
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 30px;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .logo-img {
+            width: 48px;
+            height: 48px;
+        }
+        
+        .logo-svg {
+            width: 48px;
+            height: 48px;
+            filter: drop-shadow(0 2px 4px rgba(37, 99, 235, 0.2));
+        }
+        
+        .logo-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #2563eb;
+            letter-spacing: -1px;
+        }
+        
+        .dark-mode .logo-title {
+            color: #60a5fa;
+        }
+        
+        .dark-mode-toggle {
+            background: #e5e7eb;
+            border: none;
+            border-radius: 20px;
+            padding: 8px 18px;
+            font-size: 1rem;
+            color: #374151;
+            cursor: pointer;
+            transition: background 0.3s, color 0.3s;
+        }
+        
+        .dark-mode .dark-mode-toggle {
+            background: #27272a;
+            color: #f3f4f6;
         }
         
         h1 {
@@ -855,10 +912,265 @@
                 grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
             }
         }
+        
+        /* User-Friendly Features */
+        .floating-help {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+        
+        .floating-help:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 25px rgba(102, 126, 234, 0.4);
+        }
+        
+        .connection-status {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+        }
+        
+        .connection-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #10b981;
+            animation: pulse 2s infinite;
+        }
+        
+        .connection-dot.disconnected {
+            background: #ef4444;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        .onboarding-tooltip {
+            position: absolute;
+            background: #1f2937;
+            color: white;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            max-width: 250px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            z-index: 1001;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .onboarding-tooltip::after {
+            content: '';
+            position: absolute;
+            top: -6px;
+            left: 20px;
+            width: 0;
+            height: 0;
+            border-left: 6px solid transparent;
+            border-right: 6px solid transparent;
+            border-bottom: 6px solid #1f2937;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .secure-badge {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(16, 185, 129, 0.9);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            z-index: 1000;
+        }
+        
+        .progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 0%;
+            height: 3px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            z-index: 1002;
+            transition: width 0.3s ease;
+        }
+        
+        .quick-tips {
+            background: #f0f9ff;
+            border: 1px solid #0ea5e9;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .quick-tips-icon {
+            font-size: 20px;
+            color: #0ea5e9;
+        }
+        
+        .quick-tips-content {
+            flex: 1;
+        }
+        
+        .quick-tips-title {
+            font-weight: 600;
+            color: #0c4a6e;
+            margin-bottom: 4px;
+        }
+        
+        .quick-tips-text {
+            font-size: 14px;
+            color: #0369a1;
+        }
+        
+        .dark-mode .quick-tips {
+            background: #0f172a;
+            border-color: #0ea5e9;
+        }
+        
+        .dark-mode .quick-tips-title {
+            color: #e0f2fe;
+        }
+        
+        .dark-mode .quick-tips-text {
+            color: #7dd3fc;
+        }
     </style>
 </head>
-<body>
+<body aria-label="Multi-Agent Social Dynamics Lab">
+    <!-- Progress Bar -->
+    <div class="progress-bar" id="progressBar"></div>
+    
+    <!-- Connection Status -->
+    <div class="connection-status">
+        <div class="connection-dot" id="connectionDot"></div>
+        <span id="connectionText">Connected</span>
+    </div>
+    
+    <!-- Secure Badge -->
+    <div class="secure-badge">
+        🔒 Secure & Private
+    </div>
+    
+    <!-- Floating Help Button -->
+    <div class="floating-help" onclick="showHelp()" aria-label="Get help">
+        ?
+    </div>
+    
     <div class="container">
+        <div class="header">
+            <div class="logo" aria-label="App Logo">
+                <svg class="logo-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Background circle with gradient -->
+                    <defs>
+                        <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+                        </linearGradient>
+                        <linearGradient id="agentGradient1" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#60a5fa;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#3b82f6;stop-opacity:1" />
+                        </linearGradient>
+                        <linearGradient id="agentGradient2" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#34d399;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#10b981;stop-opacity:1" />
+                        </linearGradient>
+                        <linearGradient id="agentGradient3" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#fbbf24;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#f59e0b;stop-opacity:1" />
+                        </linearGradient>
+                    </defs>
+                    
+                    <!-- Main background circle -->
+                    <circle cx="50" cy="50" r="45" fill="url(#logoGradient)" stroke="#ffffff" stroke-width="2"/>
+                    
+                    <!-- Three connected agents/people -->
+                    <!-- Agent 1 (left) -->
+                    <circle cx="30" cy="40" r="8" fill="url(#agentGradient1)"/>
+                    <circle cx="30" cy="35" r="3" fill="#ffffff"/>
+                    <circle cx="28" cy="33" r="1" fill="#1f2937"/>
+                    <circle cx="32" cy="33" r="1" fill="#1f2937"/>
+                    
+                    <!-- Agent 2 (center) -->
+                    <circle cx="50" cy="35" r="8" fill="url(#agentGradient2)"/>
+                    <circle cx="50" cy="30" r="3" fill="#ffffff"/>
+                    <circle cx="48" cy="28" r="1" fill="#1f2937"/>
+                    <circle cx="52" cy="28" r="1" fill="#1f2937"/>
+                    
+                    <!-- Agent 3 (right) -->
+                    <circle cx="70" cy="40" r="8" fill="url(#agentGradient3)"/>
+                    <circle cx="70" cy="35" r="3" fill="#ffffff"/>
+                    <circle cx="68" cy="33" r="1" fill="#1f2937"/>
+                    <circle cx="72" cy="33" r="1" fill="#1f2937"/>
+                    
+                    <!-- Connection lines between agents -->
+                    <path d="M 38 40 Q 44 35 50 35" stroke="#ffffff" stroke-width="2" fill="none" opacity="0.8"/>
+                    <path d="M 50 35 Q 56 35 62 40" stroke="#ffffff" stroke-width="2" fill="none" opacity="0.8"/>
+                    
+                    <!-- Small connection dots -->
+                    <circle cx="44" cy="37" r="1.5" fill="#ffffff" opacity="0.6"/>
+                    <circle cx="56" cy="37" r="1.5" fill="#ffffff" opacity="0.6"/>
+                    
+                    <!-- AI/tech elements -->
+                    <circle cx="50" cy="65" r="3" fill="#ffffff" opacity="0.9"/>
+                    <circle cx="50" cy="65" r="1.5" fill="#667eea"/>
+                    
+                    <!-- Small sparkles/innovation elements -->
+                    <circle cx="20" cy="25" r="1" fill="#ffffff" opacity="0.7"/>
+                    <circle cx="80" cy="25" r="1" fill="#ffffff" opacity="0.7"/>
+                    <circle cx="25" cy="70" r="1" fill="#ffffff" opacity="0.7"/>
+                    <circle cx="75" cy="70" r="1" fill="#ffffff" opacity="0.7"/>
+                </svg>
+                <span class="logo-title">Social Dynamics Lab</span>
+            </div>
+            <button class="dark-mode-toggle" aria-label="Toggle dark mode" onclick="toggleDarkMode()">🌙 Dark Mode</button>
+        </div>
+        
+        <!-- Quick Tips Section -->
+        <div class="quick-tips" id="quickTips">
+            <div class="quick-tips-icon">💡</div>
+            <div class="quick-tips-content">
+                <div class="quick-tips-title">Welcome to Social Dynamics Lab!</div>
+                <div class="quick-tips-text">Choose an experiment to see AI agents interact and learn about social engineering tactics. Each simulation is educational and helps you understand real-world security threats.</div>
+            </div>
+        </div>
+        
         <h1>🤖 Multi-Agent Social Dynamics Lab</h1>
         <p class="subtitle">Study social manipulation tactics through AI agent interactions</p>
         
@@ -1172,6 +1484,147 @@
         </div>
     </div>
     
+    <script>
+    function toggleDarkMode() {
+        document.body.classList.toggle('dark-mode');
+        // Optionally, persist mode in localStorage
+        if(document.body.classList.contains('dark-mode')) {
+            localStorage.setItem('theme', 'dark');
+        } else {
+            localStorage.setItem('theme', 'light');
+        }
+    }
+    
+    // User-Friendly Features
+    function showHelp() {
+        const helpContent = `
+            <div style="background: white; padding: 20px; border-radius: 12px; max-width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
+                <h3 style="margin-bottom: 15px; color: #2563eb;">🤖 How to Use Social Dynamics Lab</h3>
+                <div style="margin-bottom: 15px;">
+                    <strong>Step 1:</strong> Choose an experiment from the 9 available scenarios
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <strong>Step 2:</strong> Configure the number of agents and AI model
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <strong>Step 3:</strong> Watch AI agents interact in real-time
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <strong>Step 4:</strong> Analyze the results and get security recommendations
+                </div>
+                <div style="font-size: 14px; color: #666; margin-top: 20px;">
+                    💡 <strong>Pro Tip:</strong> Try different experiments to understand various social engineering tactics!
+                </div>
+                <button onclick="this.parentElement.parentElement.remove()" style="background: #2563eb; color: white; border: none; padding: 8px 16px; border-radius: 6px; margin-top: 15px; cursor: pointer;">Got it!</button>
+            </div>
+        `;
+        
+        // Create modal overlay
+        const overlay = document.createElement('div');
+        overlay.style.cssText = `
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.5); display: flex; align-items: center; 
+            justify-content: center; z-index: 10000;
+        `;
+        overlay.innerHTML = helpContent;
+        overlay.onclick = function(e) {
+            if (e.target === overlay) overlay.remove();
+        };
+        document.body.appendChild(overlay);
+    }
+    
+    function updateProgress(percent) {
+        document.getElementById('progressBar').style.width = percent + '%';
+    }
+    
+    function updateConnectionStatus(connected) {
+        const dot = document.getElementById('connectionDot');
+        const text = document.getElementById('connectionText');
+        
+        if (connected) {
+            dot.classList.remove('disconnected');
+            text.textContent = 'Connected';
+        } else {
+            dot.classList.add('disconnected');
+            text.textContent = 'Disconnected';
+        }
+    }
+    
+    function showQuickTip(title, message) {
+        const tips = document.getElementById('quickTips');
+        tips.querySelector('.quick-tips-title').textContent = title;
+        tips.querySelector('.quick-tips-text').textContent = message;
+        tips.style.display = 'flex';
+        
+        // Auto-hide after 5 seconds
+        setTimeout(() => {
+            tips.style.display = 'none';
+        }, 5000);
+    }
+    
+    function hideQuickTips() {
+        document.getElementById('quickTips').style.display = 'none';
+    }
+    
+    // Onboarding for first-time users
+    function checkFirstTimeUser() {
+        if (!localStorage.getItem('hasVisited')) {
+            localStorage.setItem('hasVisited', 'true');
+            setTimeout(() => {
+                showQuickTip(
+                    'First time here?', 
+                    'Start with "Credential Theft" to see how social engineering works. Watch how AI agents build trust and extract information!'
+                );
+            }, 1000);
+        }
+    }
+    
+    // Simulate connection status (replace with real backend connection)
+    function simulateConnection() {
+        updateConnectionStatus(true);
+        // Simulate occasional disconnections
+        setInterval(() => {
+            if (Math.random() < 0.1) { // 10% chance of disconnection
+                updateConnectionStatus(false);
+                setTimeout(() => updateConnectionStatus(true), 2000);
+            }
+        }, 10000);
+    }
+    
+    // On load, set theme from localStorage and initialize user features
+    window.onload = function() {
+        if(localStorage.getItem('theme') === 'dark') {
+            document.body.classList.add('dark-mode');
+        }
+        
+        checkFirstTimeUser();
+        simulateConnection();
+        updateProgress(0);
+        
+        // Add click handler to hide quick tips
+        document.getElementById('quickTips').addEventListener('click', hideQuickTips);
+    }
+    
+    // Update progress based on user actions
+    function updateUserProgress() {
+        const currentStep = parseInt(document.querySelector('.step.active').querySelector('.step-circle').textContent);
+        const progress = (currentStep / 3) * 100;
+        updateProgress(progress);
+    }
+    
+    // Override existing functions to include progress updates
+    const originalNextStep = window.nextStep;
+    window.nextStep = function() {
+        if (originalNextStep) originalNextStep();
+        updateUserProgress();
+    };
+    
+    const originalPreviousStep = window.previousStep;
+    window.previousStep = function() {
+        if (originalPreviousStep) originalPreviousStep();
+        updateUserProgress();
+    };
+    </script>
     <script src="app.js"></script>
 </body>
 </html>
