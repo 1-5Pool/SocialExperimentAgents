@@ -631,6 +631,181 @@
             margin-top: 30px;
         }
         
+        /* Day Headers and Live Conversations */
+        .day-header {
+            margin: 20px 0 15px 0;
+        }
+        
+        .day-separator {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+        }
+        
+        .day-label {
+            font-size: 16px;
+        }
+        
+        .conversation-count {
+            font-size: 12px;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 2px 8px;
+            border-radius: 12px;
+        }
+        
+        .one-to-one-conversation {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            animation: slideIn 0.5s ease;
+        }
+        
+        .one-to-one-conversation:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transform: translateY(-1px);
+        }
+        
+        .conversation-header {
+            background: #f8fafc;
+            padding: 12px 15px;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .conversation-participants {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .participant {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .participant-avatar {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .participant-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: #374151;
+        }
+        
+        .conversation-arrow {
+            color: #6b7280;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        
+        .conversation-meta {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .conversation-sequence {
+            background: #3b82f6;
+            color: white;
+            font-size: 11px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+        
+        .conversation-day {
+            background: #10b981;
+            color: white;
+            font-size: 11px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+        
+        .conversation-content {
+            padding: 15px;
+        }
+        
+        .conversation-text {
+            font-size: 14px;
+            line-height: 1.6;
+            color: #374151;
+            background: #f9fafb;
+            padding: 12px 15px;
+            border-radius: 6px;
+            border-left: 3px solid #2563eb;
+        }
+        
+        .no-conversations {
+            text-align: center;
+            padding: 40px 20px;
+            color: #6b7280;
+        }
+        
+        .conversation-error {
+            text-align: center;
+            padding: 30px 20px;
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: 8px;
+            margin: 20px;
+        }
+        
+        .error-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+        
+        .error-message h4 {
+            color: #dc2626;
+            margin-bottom: 10px;
+        }
+        
+        .error-message p {
+            color: #7f1d1d;
+            margin-bottom: 15px;
+        }
+        
+        .panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .faction-config {
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            background: #fafafa;
+        }
+        
+        .faction-config h5 {
+            color: #374151;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+        
         /* Responsive */
         @media (max-width: 768px) {
             .experiment-cards {
@@ -648,6 +823,16 @@
             
             .flow-steps::before {
                 display: none;
+            }
+            
+            .conversation-header {
+                flex-direction: column;
+                gap: 10px;
+                align-items: flex-start;
+            }
+            
+            .conversation-participants {
+                flex-wrap: wrap;
             }
         }
     </style>
@@ -676,7 +861,7 @@
                 </div>
                 <div class="step" id="step2">
                     <div class="step-circle">2</div>
-                    <div class="step-label">Configure Agents</div>
+                    <div class="step-label">Configure Template</div>
                 </div>
                 <div class="step" id="step3">
                     <div class="step-circle">3</div>
@@ -696,94 +881,26 @@
             <div id="step1-content" class="step-content">
                 <h3 style="margin-bottom: 20px;">Select Your Experiment:</h3>
                 <div class="experiment-cards">
-                    <div class="experiment-card" onclick="selectExperiment('social-engineering')">
+                    <div class="experiment-card" onclick="selectExperiment('coffee_misinformation')">
+                        <div class="experiment-icon">☕</div>
+                        <div class="experiment-title">Coffee Misinformation</div>
+                        <div class="experiment-desc">You are in a coffee shop where you are discussing your coffee preferences</div>
+                    </div>
+                    
+                    <div class="experiment-card" onclick="selectExperiment('social_engineering')">
                         <div class="experiment-icon">🔓</div>
-                        <div class="experiment-title">Credential Theft</div>
-                        <div class="experiment-desc">Attacker tries to steal passwords</div>
-                    </div>
-                    
-                    <div class="experiment-card" onclick="selectExperiment('phishing')">
-                        <div class="experiment-icon">🎣</div>
-                        <div class="experiment-title">Phishing Attack</div>
-                        <div class="experiment-desc">Agents receive suspicious requests</div>
-                    </div>
-                    
-                    <div class="experiment-card" onclick="selectExperiment('insider-threat')">
-                        <div class="experiment-icon">🕵️</div>
-                        <div class="experiment-title">Insider Threat</div>
-                        <div class="experiment-desc">Detect malicious insider behavior</div>
-                    </div>
-                    
-                    <div class="experiment-card" onclick="selectExperiment('peer-pressure')">
-                        <div class="experiment-icon">👫</div>
-                        <div class="experiment-title">Peer Pressure</div>
-                        <div class="experiment-desc">Group pressures individual to comply</div>
-                    </div>
-                    
-                    <div class="experiment-card" onclick="selectExperiment('authority-bias')">
-                        <div class="experiment-icon">👔</div>
-                        <div class="experiment-title">Authority Bias</div>
-                        <div class="experiment-desc">Boss requests unethical actions</div>
-                    </div>
-                    
-                    <div class="experiment-card" onclick="selectExperiment('workplace-rumors')">
-                        <div class="experiment-icon">🗣️</div>
-                        <div class="experiment-title">Workplace Rumors</div>
-                        <div class="experiment-desc">How gossip spreads and morphs</div>
-                    </div>
-                    
-                    <div class="experiment-card" onclick="selectExperiment('trust-exploitation')">
-                        <div class="experiment-icon">🤝</div>
-                        <div class="experiment-title">Trust Exploitation</div>
-                        <div class="experiment-desc">Friend betrays confidential info</div>
-                    </div>
-                    
-                    <div class="experiment-card" onclick="selectExperiment('groupthink')">
-                        <div class="experiment-icon">🧠</div>
-                        <div class="experiment-title">Groupthink</div>
-                        <div class="experiment-desc">Team makes poor decisions together</div>
-                    </div>
-                    
-                    <div class="experiment-card" onclick="selectExperiment('bribery')">
-                        <div class="experiment-icon">💰</div>
-                        <div class="experiment-title">Bribery Attempt</div>
-                        <div class="experiment-desc">Agent offers incentives for info</div>
+                        <div class="experiment-title">Social Engineering</div>
+                        <div class="experiment-desc">How can you get people to reveal their passwords or secret codes?</div>
                     </div>
                 </div>
             </div>
             
-            <!-- Step 2: Configuration -->
+            <!-- Step 2: Template Configuration -->
             <div id="step2-content" class="step-content" style="display: none;">
-                <h3 style="margin-bottom: 20px;">Configure Your Simulation:</h3>
-                <div class="config-section">
-                    <div class="config-item">
-                        <label class="config-label">Number of Agents</label>
-                        <input type="range" class="slider" id="agentCount" min="3" max="10" value="6" oninput="updateSlider()">
-                        <span class="slider-value" id="agentValue">6</span>
-                    </div>
-                    
-                    <div class="config-item">
-                        <label class="config-label">AI Model</label>
-                        <select id="llmModel" style="width: 100%; padding: 8px; border: 1px solid #e5e7eb; border-radius: 4px;">
-                            <option value="gpt-4o-mini">GPT-4o Mini (Fast & Cheap)</option>
-                            <option value="gpt-4o">GPT-4o (Smarter)</option>
-                            <option value="claude-3-haiku">Claude 3 Haiku (Fast)</option>
-                        </select>
-                    </div>
-                    
-                    <div class="config-item">
-                        <label class="config-label">Communication Pattern</label>
-                        <select id="commPattern" style="width: 100%; padding: 8px; border: 1px solid #e5e7eb; border-radius: 4px;">
-                            <option value="async">Asynchronous (Natural)</option>
-                            <option value="sync">Synchronous (Turn-based)</option>
-                            <option value="supervisor">Supervisor-Worker</option>
-                        </select>
-                    </div>
-                    
-                    <div class="config-item">
-                        <label class="config-label">
-                            <input type="checkbox" id="sharedMemory" checked> Enable Shared Memory
-                        </label>
+                <div id="template-config">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p>Loading template configuration...</p>
                     </div>
                 </div>
             </div>
@@ -799,12 +916,6 @@
         
         <!-- Simulation Display -->
         <div id="simulation-display" style="display: none;">
-            <!-- Flow Diagram for Current Experiment -->
-            <div class="flow-container" id="flow-diagram">
-                <h3 style="margin-bottom: 20px;">Current Flow:</h3>
-                <div class="flow-diagram" id="experiment-flow"></div>
-            </div>
-            
             <!-- Status Dashboard -->
             <div class="status-grid">
                 <div class="status-card">
@@ -842,7 +953,12 @@
                 
                 <!-- Chat Panel -->
                 <div class="panel">
-                    <div class="panel-header">💬 Live Conversation</div>
+                    <div class="panel-header">
+                        💬 Live One-to-One Conversations
+                        <button onclick="updateLiveConversations()" style="background: #2563eb; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 12px; margin-left: auto; cursor: pointer;">
+                            🔄 Refresh
+                        </button>
+                    </div>
                     <div class="panel-content" id="chatPanel">
                         <div class="loading">
                             <div class="spinner"></div>

@@ -1,5 +1,6 @@
 # File: api/app.py
 from fastapi import FastAPI, HTTPException, BackgroundTasks
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Optional, Dict, Any
 from infrastructure.db import DBRepository
@@ -10,6 +11,15 @@ import json
 import traceback
 
 app = FastAPI(title="Social Experiment Simulation Platform", version="1.0.0")
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allows all origins
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all methods
+    allow_headers=["*"],  # Allows all headers
+)
 repo = DBRepository("simulation.db")
 
 
