@@ -18,7 +18,7 @@ class LettaAgent(AgentInterface):
     ):
         super().__init__(agent_id, name, faction_prompt, personal_prompt, powers, role)
         self.client = Letta(
-            token="sk-let-YzRlOWI5MjMtZTFiZi00YWRlLTlkNWQtYmU2OTJlYmVkMzMzOmFjMGU3OGUxLTNkM2YtNGZjYy04YjU0LTAzMDRkMDc1ODQyZA=="
+            token="sk-let-NTdkZWQ5YzktOWZhOS00OTM0LWEwOTgtOTIxMTRlODdhZjg0OjZhNmRjZGYzLWUwOTUtNGM0Ny05NzNiLTIyZDc5OTg2ZjVlYw=="
         )
         self.agent = self.client.agents.create(
             model="openai/gpt-4.1",
@@ -89,7 +89,7 @@ class LettaModerator(ModeratorInterface):
     def __init__(self, moderator_id: str):
         super().__init__(moderator_id)
         self.client = Letta(
-            token="sk-let-ZDExYzJjNTItODUyYy00MGEyLWI3NWQtYmVlODU2ZWFlZWMwOjUxMGY1YTJhLWM5MDctNDRkNS05MmE5LWVhOTAxYmJiZmYwMw=="
+            token="sk-let-NTdkZWQ5YzktOWZhOS00OTM0LWEwOTgtOTIxMTRlODdhZjg0OjZhNmRjZGYzLWUwOTUtNGM0Ny05NzNiLTIyZDc5OTg2ZjVlYw=="
         )
         self.agent = self.client.agents.create(
             model="openai/gpt-4.1",
