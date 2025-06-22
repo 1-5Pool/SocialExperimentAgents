@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Dict, Any, List
+from domain.entities import Conversation
 
 
 class AgentInterface(ABC):
@@ -43,12 +44,6 @@ class AgentInterface(ABC):
         pass
 
 
-# File: services/moderator_interface.py
-from abc import ABC, abstractmethod
-from typing import List
-from domain.entities import Conversation
-
-
 class ModeratorInterface(ABC):
     def __init__(self, moderator_id: str):
         self.id = moderator_id
@@ -69,9 +64,3 @@ class ModeratorInterface(ABC):
         self, experiment_id: str, conversations: List[Conversation]
     ) -> str:
         pass
-
-
-# File: services/dummy_agent.py
-import random
-from typing import List, Any
-from services.agent_interface import AgentInterface

@@ -5,8 +5,7 @@ from math import ceil
 from domain.entities import AgentCount, Conversation, ExperimentResult
 from infrastructure.db import DBRepository
 from services.agent.dummy import DummyAgent, DummyModerator
-from services.agent_interface import AgentInterface
-from services.moderator_interface import ModeratorInterface
+from services.agent.interface import AgentInterface, ModeratorInterface
 
 
 class SimulationService:

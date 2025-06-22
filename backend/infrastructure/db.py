@@ -8,7 +8,7 @@ from domain.entities import (
     ExperimentResult,
     Template,
 )
-from config.db_config import get_connection
+from config import get_connection
 
 
 class DBRepository:
