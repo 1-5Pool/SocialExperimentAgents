@@ -7,6 +7,11 @@ let messageCount = 0;
 let agents = {};
 let conversationHistory = [];
 
+// === 3D Agent Environment (Three.js) ===
+let threeScene, threeCamera, threeRenderer, threeAnimationId, threeControls;
+let threeAgents = [];
+let threeAnimating = true;
+
 // Experiment configurations
 const experimentFlows = {
     'social-engineering': {
@@ -289,6 +294,13 @@ function startSimulation() {
             actionsDiv.appendChild(reportBtn);
         }
     }, 10000); // Show after 10 seconds
+
+    // Get agent list from global state if available
+    let agentList = Object.values(agents || {});
+    if (!agentList.length && window.selectedExperiment && experimentFlows[selectedExperiment]) {
+        agentList = experimentFlows[selectedExperiment].agents || [];
+    }
+    initThreeEnvironment(agentList);
 }
 
 function createAgentDisplay() {
@@ -909,4 +921,67 @@ function newSimulation() {
     }
     
     updateStepDisplay();
+}
+
+// === 3D Agent Environment (Three.js) ===
+function initThreeEnvironment(agentList = []) {
+    const container = document.getElementById('threejs-container');
+    if (!container) return;
+    // Clear previous renderer if any
+    container.innerHTML = '';
+    // Scene
+    threeScene = new THREE.Scene();
+    // Camera
+    threeCamera = new THREE.PerspectiveCamera(75, container.offsetWidth / container.offsetHeight, 0.1, 1000);
+    threeCamera.position.z = 10;
+    // Renderer
+    threeRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    threeRenderer.setSize(container.offsetWidth, container.offsetHeight);
+    container.appendChild(threeRenderer.domElement);
+    // Lighting
+    const light = new THREE.AmbientLight(0xffffff, 1);
+    threeScene.add(light);
+    // Add agents as spheres in a circle
+    threeAgents = [];
+    const radius = 4;
+    const colors = [0x3b82f6, 0x10b981, 0xf59e0b, 0xef4444, 0x6366f1, 0x8b5cf6];
+    const n = agentList.length || 6;
+    for (let i = 0; i < n; i++) {
+        const angle = (i / n) * Math.PI * 2;
+        const geometry = new THREE.SphereGeometry(0.6, 32, 32);
+        const material = new THREE.MeshStandardMaterial({ color: colors[i % colors.length] });
+        const sphere = new THREE.Mesh(geometry, material);
+        sphere.position.x = Math.cos(angle) * radius;
+        sphere.position.y = Math.sin(angle) * radius;
+        sphere.userData = { name: agentList[i]?.name || `Agent_${i+1}` };
+        threeScene.add(sphere);
+        threeAgents.push(sphere);
+    }
+    animateThree();
+}
+
+function animateThree() {
+    if (!threeAnimating) return;
+    threeAnimationId = requestAnimationFrame(animateThree);
+    // Simple rotation for effect
+    threeScene.rotation.y += 0.003;
+    threeRenderer.render(threeScene, threeCamera);
+}
+
+function resetCamera() {
+    if (threeCamera) {
+        threeCamera.position.set(0, 0, 10);
+        threeCamera.lookAt(0, 0, 0);
+    }
+}
+
+function toggleAnimation() {
+    threeAnimating = !threeAnimating;
+    if (threeAnimating) animateThree();
+    else cancelAnimationFrame(threeAnimationId);
+}
+
+function toggleEmotions() {
+    // Placeholder for emotion indicator toggling
+    alert('Emotion indicators toggled (demo stub).');
 }
