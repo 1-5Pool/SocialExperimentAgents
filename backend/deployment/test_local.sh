@@ -131,7 +131,7 @@ EXPERIMENT_1=$(curl -s -X POST "$BASE_URL/run_experiment" \
   -d '{
     "template_id": "coffee_misinformation",
     "rounds": 5,
-    "conversations_per_round": 6
+    "conversations_per_round": 4
   }' | jq -r '.experiment_id')
 
 echo "Started experiment: $EXPERIMENT_1"

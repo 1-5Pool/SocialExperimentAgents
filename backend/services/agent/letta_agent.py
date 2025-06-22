@@ -18,9 +18,8 @@ class LettaAgent(AgentInterface):
     ):
         super().__init__(agent_id, name, faction_prompt, personal_prompt, powers, role)
         self.client = Letta(
-            token="sk-let-Y2M3OGNlMzQtMWRhNC00NDgxLWE5YjMtYTJhOGE3M2VkMzAyOjhmYzExNWY2LWMwYTAtNDQ2YS05ZTFkLWVlZmI2MThmMDI0Yg=="
+            token="sk-let-N2E4ZDJmM2YtZjM0My00YzBhLWJmODMtZDNiMDgzM2E3YjU3OjAwYTczNGIxLTRjNjQtNGUzNy04NjBlLTQwNmI0YmNmNDQ2Yg=="
         )
-        #2 2. sk-let-N2E4ZDJmM2YtZjM0My00YzBhLWJmODMtZDNiMDgzM2E3YjU3OjAwYTczNGIxLTRjNjQtNGUzNy04NjBlLTQwNmI0YmNmNDQ2Yg==
         # sk-let-ZjFhNzEyNGItYTA2Ny00ZTdiLWE1NzMtYmU4N2Y5YjIwOWU3OjNiM2ViYzcyLTMxNDUtNDc1ZS04MDE0LWM0OGRlNzUzMTg4NA==
         # sk-let-ZjFhNzEyNGItYTA2Ny00ZTdiLWE1NzMtYmU4N2Y5YjIwOWU3OmU1Zjk1ZmFiLTQ4NDAtNGYwZi1hMmJiLWY3OTY5NWNmZDJkNg==
         # sk-let-ZjFhNzEyNGItYTA2Ny00ZTdiLWE1NzMtYmU4N2Y5YjIwOWU3OjMxYWI2ZTIzLTE4MmMtNDczZS1hYjZmLTg5MzZmM2RlM2Y4NA==
@@ -34,7 +33,8 @@ class LettaAgent(AgentInterface):
         
         #paid one  sk-let-MDdiNTEzOWYtODU1Ni00NjY5LWI0MzctMTU1ZWFjMmU5ODU1OmZlZmQyN2IwLWQ3NTgtNDZlMi04M2E3LTUyZjIzOGRjYzE3NA==
         self.agent = self.client.agents.create(
-            model="openai/gpt-4.1",
+            model="openai/gpt-4o-mini",
+            context_window_limit=16000,
             embedding="openai/text-embedding-3-small",
             memory_blocks=[
                 {
