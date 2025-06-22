@@ -12,9 +12,6 @@ import traceback
 app = FastAPI(title="Social Experiment Simulation Platform", version="1.0.0")
 repo = DBRepository("simulation.db")
 
-# Running experiments store
-running_experiments: Dict[str, str] = {}
-
 
 class RunExperimentRequest(BaseModel):
     template_id: str
@@ -30,33 +27,56 @@ class CreateTemplateRequest(BaseModel):
     template_data: Dict[str, Any]
 
 
-async def run_experiment_background(request: RunExperimentRequest):
+async def run_experiment_background(
+    request: RunExperimentRequest, experiment_id: str, sim: SimulationService
+):
     """Background task to run experiment"""
     try:
-        moderator = DummyModerator("mod-001")
-        sim = SimulationService(
-            repo=repo,
-            template_id=request.template_id,
-            moderator=moderator,
-            rounds=request.rounds,
-            conversations_per_round=request.conversations_per_round,
-            max_conversations_per_agent=request.max_conversations_per_agent,
-            max_message_length=request.max_message_length,
-        )
-        experiment_id = await sim.run()
-        print(experiment_id)
-        # Mark as completed
-        if experiment_id in running_experiments:
-            running_experiments[experiment_id] = "completed"
+        # Update status to running
+        repo.update_experiment_status(experiment_id, "running")
+
+        # moderator = DummyModerator("mod-001")
+        # sim = SimulationService(
+        #     repo=repo,
+        #     template_id=request.template_id,
+        #     moderator=moderator,
+        #     rounds=request.rounds,
+        #     conversations_per_round=request.conversations_per_round,
+        #     max_conversations_per_agent=request.max_conversations_per_agent,
+        #     max_message_length=request.max_message_length,
+        #     # experiment_id=experiment_id,  # Pass the existing experiment_id
+        # )
+
+        await sim.run()
+        print(f"Experiment {experiment_id} completed successfully")
+
+        # Update status to completed
+        repo.update_experiment_status(experiment_id, "completed")
 
     except Exception as e:
         traceback.print_exc()
-        print(f"Error running experiment: {e}")
-        # Mark as failed - find the running experiment and mark it as failed
-        for exp_id, status in list(running_experiments.items()):
-            if status == "running":
-                running_experiments[exp_id] = "failed"
-                break
+        print(f"Error running experiment {experiment_id}: {e}")
+
+        # Update status to failed
+        repo.update_experiment_status(experiment_id, "failed")
+
+
+def get_experiment_status_from_db(experiment_id: str) -> str:
+    """Determine experiment status from database"""
+    experiment = repo.get_experiment_by_id(experiment_id)
+    if not experiment:
+        return "not_found"
+
+    # Check if status is explicitly set in database
+    if hasattr(experiment, "status") and experiment.status:
+        return experiment.status
+
+    # Fallback: check if experiment has results (legacy behavior)
+    experiment_result = repo.get_experiment_result(experiment_id)
+    if experiment_result:
+        return "completed"
+
+    return "unknown"
 
 
 @app.get("/")
@@ -216,9 +236,6 @@ def create_template(request: CreateTemplateRequest):
                 detail="template_data.conversations_per_round must be a positive integer",
             )
 
-        # Convert template_data to JSON string for storage
-        # template_data_json = json.dumps(request.template_data)
-
         # Save template to database
         success = repo.save_template(
             template_id=request.template_id,
@@ -252,15 +269,7 @@ def list_experiments():
     experiments = repo.get_all_experiments()
     result = []
     for exp in experiments:
-        status = "unknown"
-        if exp[0] in running_experiments:
-            status = running_experiments[exp[0]]
-        else:
-            # Check if experiment has results (completed)
-            experiment_result = repo.get_experiment_result(exp[0])
-            if experiment_result:
-                status = "completed"
-
+        status = get_experiment_status_from_db(exp[0])
         result.append(
             {
                 "experiment_id": exp[0],
@@ -288,14 +297,7 @@ def get_experiment_details(experiment_id: str):
             status_code=404, detail=f"Experiment {experiment_id} not found"
         )
 
-    status = "unknown"
-    if experiment_id in running_experiments:
-        status = running_experiments[experiment_id]
-    else:
-        # Check if experiment has results (completed)
-        experiment_result = repo.get_experiment_result(experiment_id)
-        if experiment_result:
-            status = "completed"
+    status = get_experiment_status_from_db(experiment_id)
 
     return {
         "experiment_id": experiment[0],
@@ -375,7 +377,7 @@ async def run_experiment(
                 status_code=404, detail=f"Template {request.template_id} not found"
             )
 
-        # Create a placeholder experiment to get ID
+        # Create experiment record in database with "pending" status
         moderator = DummyModerator("mod-001")
         sim = SimulationService(
             repo=repo,
@@ -388,15 +390,19 @@ async def run_experiment(
         )
 
         experiment_id = sim.experiment_id
-        running_experiments[experiment_id] = "running"
+
+        # Create experiment record with initial status
+        repo.create_experiment_record(experiment_id, request.template_id, "pending")
 
         # Start background task
-        background_tasks.add_task(run_experiment_background, request)
+        background_tasks.add_task(
+            run_experiment_background, request, experiment_id, sim
+        )
 
         return {
             "experiment_id": experiment_id,
-            "status": "started",
-            "message": f"Experiment started with {len(sim.agents)} agents",
+            "status": "pending",
+            "message": f"Experiment queued to start with {len(sim.agents)} agents",
         }
 
     except Exception as e:
@@ -406,50 +412,42 @@ async def run_experiment(
 @app.get("/experiments/{experiment_id}/status")
 def get_experiment_status(experiment_id: str):
     """Get the current status of an experiment"""
-    if experiment_id in running_experiments:
-        return {
-            "experiment_id": experiment_id,
-            "status": running_experiments[experiment_id],
-        }
+    status = get_experiment_status_from_db(experiment_id)
 
-    # Check if experiment exists in database
-    experiments = repo.get_all_experiments()
-    for exp in experiments:
-        if exp[0] == experiment_id:
-            # Check if experiment has results (completed)
-            experiment_result = repo.get_experiment_result(experiment_id)
-            status = "completed" if experiment_result else "unknown"
-            return {"experiment_id": experiment_id, "status": status}
+    if status == "not_found":
+        raise HTTPException(
+            status_code=404, detail=f"Experiment {experiment_id} not found"
+        )
 
-    # Experiment not found
-    raise HTTPException(status_code=404, detail=f"Experiment {experiment_id} not found")
+    return {
+        "experiment_id": experiment_id,
+        "status": status,
+    }
 
 
 @app.delete("/experiments/{experiment_id}")
 def delete_experiment(experiment_id: str):
     """Delete an experiment and all its data"""
     try:
-        # Check if experiment is currently running
-        if (
-            experiment_id in running_experiments
-            and running_experiments[experiment_id] == "running"
-        ):
-            raise HTTPException(
-                status_code=400, detail="Cannot delete a running experiment"
-            )
+        # Check experiment status
+        status = get_experiment_status_from_db(experiment_id)
 
-        # Verify experiment exists
-        experiments = repo.get_all_experiments()
-        experiment_exists = any(exp[0] == experiment_id for exp in experiments)
-        if not experiment_exists:
+        if status == "not_found":
             raise HTTPException(
                 status_code=404, detail=f"Experiment {experiment_id} not found"
             )
 
-        # Delete experiment (this should be implemented in the repository)
-        # For now, just remove from running experiments if it exists
-        if experiment_id in running_experiments:
-            del running_experiments[experiment_id]
+        if status == "running":
+            raise HTTPException(
+                status_code=400, detail="Cannot delete a running experiment"
+            )
+
+        # Delete experiment from database
+        success = repo.delete_experiment(experiment_id)
+        if not success:
+            raise HTTPException(
+                status_code=500, detail="Failed to delete experiment from database"
+            )
 
         return {
             "experiment_id": experiment_id,
@@ -467,17 +465,21 @@ def health_check():
     try:
         # Test database connection
         templates = repo.get_all_templates()
+        experiments = repo.get_all_experiments()
+
+        # Count running experiments
+        running_count = 0
+        for exp in experiments:
+            status = get_experiment_status_from_db(exp[0])
+            if status == "running":
+                running_count += 1
+
         return {
             "status": "healthy",
             "database": "connected",
             "templates_count": len(templates),
-            "running_experiments": len(
-                [
-                    status
-                    for status in running_experiments.values()
-                    if status == "running"
-                ]
-            ),
+            "total_experiments": len(experiments),
+            "running_experiments": running_count,
         }
     except Exception as e:
         return {"status": "unhealthy", "error": str(e)}

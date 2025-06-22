@@ -45,6 +45,7 @@ class DBRepository:
             experiment_id TEXT PRIMARY KEY,
             template_id TEXT,
             num_agents INTEGER,
+            status TEXT DEFAULT 'unknown',
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )"""
         )
@@ -89,6 +90,14 @@ class DBRepository:
             FOREIGN KEY (experiment_id) REFERENCES experiments(experiment_id)
         )"""
         )
+
+        # Add status column to existing experiments table if it doesn't exist
+        cursor.execute("PRAGMA table_info(experiments)")
+        columns = [row[1] for row in cursor.fetchall()]
+        if "status" not in columns:
+            cursor.execute(
+                "ALTER TABLE experiments ADD COLUMN status TEXT DEFAULT 'unknown'"
+            )
 
         conn.commit()
 
@@ -211,18 +220,131 @@ class DBRepository:
 
         exp_id = str(uuid.uuid4())
         cursor.execute(
-            "INSERT INTO experiments (experiment_id, template_id, num_agents) VALUES (?, ?, ?)",
-            (exp_id, template_id, num_agents),
+            "INSERT INTO experiments (experiment_id, template_id, num_agents, status) VALUES (?, ?, ?, ?)",
+            (exp_id, template_id, num_agents, "unknown"),
         )
         conn.commit()
         return exp_id
+
+    def create_experiment_record(
+        self, experiment_id: str, template_id: str, status: str = "pending"
+    ) -> bool:
+        """Create a new experiment record with specified ID and status"""
+        cursor = self._get_cursor()
+        conn = self._get_connection()
+
+        try:
+            cursor.execute(
+                "INSERT INTO experiments (experiment_id, template_id, num_agents, status) VALUES (?, ?, ?, ?)",
+                (
+                    experiment_id,
+                    template_id,
+                    0,
+                    status,
+                ),  # num_agents will be updated later
+            )
+            conn.commit()
+            return True
+        except Exception as e:
+            print(f"Error creating experiment record: {e}")
+            conn.rollback()
+            return False
+
+    def get_experiment_by_id(self, experiment_id: str) -> Optional[Experiment]:
+        """Get specific experiment by ID"""
+        cursor = self._get_cursor()
+        cursor.execute(
+            """
+            SELECT e.experiment_id, e.template_id, t.description, e.created_at, e.status, e.num_agents
+            FROM experiments e
+            LEFT JOIN templates t ON e.template_id = t.template_id
+            WHERE e.experiment_id = ?
+            """,
+            (experiment_id,),
+        )
+        row = cursor.fetchone()
+        if row:
+            # Create an Experiment object with the fetched data
+            return Experiment(
+                experiment_id=row[0],
+                template_id=row[1],
+                template_description=row[2],
+                created_at=row[3],
+                status=row[4],
+                num_agents=row[5],
+            )
+        return None
+
+    def update_experiment_status(self, experiment_id: str, status: str) -> bool:
+        """Update experiment status"""
+        cursor = self._get_cursor()
+        conn = self._get_connection()
+
+        try:
+            cursor.execute(
+                "UPDATE experiments SET status = ? WHERE experiment_id = ?",
+                (status, experiment_id),
+            )
+            conn.commit()
+            return cursor.rowcount > 0
+        except Exception as e:
+            print(f"Error updating experiment status: {e}")
+            conn.rollback()
+            return False
+
+    def update_experiment_agent_count(
+        self, experiment_id: str, num_agents: int
+    ) -> bool:
+        """Update experiment agent count"""
+        cursor = self._get_cursor()
+        conn = self._get_connection()
+
+        try:
+            cursor.execute(
+                "UPDATE experiments SET num_agents = ? WHERE experiment_id = ?",
+                (num_agents, experiment_id),
+            )
+            conn.commit()
+            return cursor.rowcount > 0
+        except Exception as e:
+            print(f"Error updating experiment agent count: {e}")
+            conn.rollback()
+            return False
+
+    def delete_experiment(self, experiment_id: str) -> bool:
+        """Delete an experiment and all related data"""
+        cursor = self._get_cursor()
+        conn = self._get_connection()
+
+        try:
+            # Delete in order to respect foreign key constraints
+            cursor.execute(
+                "DELETE FROM experiment_results WHERE experiment_id = ?",
+                (experiment_id,),
+            )
+            cursor.execute(
+                "DELETE FROM conversations WHERE experiment_id = ?", (experiment_id,)
+            )
+            cursor.execute(
+                "DELETE FROM agent_counts WHERE experiment_id = ?", (experiment_id,)
+            )
+            cursor.execute(
+                "DELETE FROM experiments WHERE experiment_id = ?", (experiment_id,)
+            )
+
+            conn.commit()
+            return True
+        except Exception as e:
+            print(f"Error deleting experiment: {e}")
+            conn.rollback()
+            return False
 
     def get_all_experiments(self):
         """Get all experiments with template info"""
         cursor = self._get_cursor()
         cursor.execute(
             """
-            SELECT e.experiment_id, e.template_id, t.description, e.created_at
+            SELECT e.experiment_id, e.template_id, t.description, e.created_at, e.status
             FROM experiments e
             LEFT JOIN templates t ON e.template_id = t.template_id
             ORDER BY e.created_at DESC
@@ -244,7 +366,7 @@ class DBRepository:
     def insert_conversation(self, conversation: Conversation):
         cursor = self._get_cursor()
         conn = self._get_connection()
-
+        print(conversation.experiment_id)
         cursor.execute(
             """
             INSERT INTO conversations (experiment_id, day_no, sequence_no, agent_1, agent_2, text)
@@ -286,6 +408,7 @@ class DBRepository:
             (experiment_id,),
         )
         rows = cursor.fetchall()
+        print(rows)
         return [Conversation(*row) for row in rows]
 
     def get_experiment_result(self, experiment_id: str) -> Optional[str]:

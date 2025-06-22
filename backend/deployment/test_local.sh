@@ -135,14 +135,14 @@ EXPERIMENT_1=$(curl -s -X POST "$BASE_URL/run_experiment" \
   }' | jq -r '.experiment_id')
 
 echo "Started experiment: $EXPERIMENT_1"
-curl -s -X POST "$BASE_URL/run_experiment" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "template_id": "political_debate_v1",
-    "rounds": 2,
-    "conversations_per_round": 3
-  }' | jq '.'
-echo -e "\n"
+# curl -s -X POST "$BASE_URL/run_experiment" \
+#   -H "Content-Type: application/json" \
+#   -d '{
+#     "template_id": "political_debate_v1",
+#     "rounds": 2,
+#     "conversations_per_round": 3
+#   }' | jq '.'
+# echo -e "\n"
 
 # echo "📍 13. Starting Second Experiment - Business Negotiation"
 # EXPERIMENT_2=$(curl -s -X POST "$BASE_URL/run_experiment" \

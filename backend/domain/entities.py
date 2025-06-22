@@ -6,7 +6,11 @@ from typing import Optional
 class Experiment:
     experiment_id: str
     template_id: str
-    num_agents: int
+    template_description: Optional[str] = None
+    created_at: Optional[str] = None
+    status: Optional[str] = "unknown"
+    num_agents: Optional[int] = 0
+    rounds: int = 0
 
 
 @dataclass

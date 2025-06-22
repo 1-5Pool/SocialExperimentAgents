@@ -85,21 +85,21 @@ class DummyModerator(ModeratorInterface):
         self, experiment: Experiment, conversations: List[Conversation]
     ) -> str:
         """Generate a simple summary report"""
-        total_messages = sum(len(conv.messages) for conv in conversations)
+        total_messages = sum(1 for conv in conversations)
         unique_agents = set()
         for conv in conversations:
-            unique_agents.add(conv.agent_a_id)
-            unique_agents.add(conv.agent_b_id)
+            unique_agents.add(conv.agent_1)
+            unique_agents.add(conv.agent_2)
 
-        faction_counts = {}
-        for agent in experiment.agents:
-            faction_counts[agent.faction] = faction_counts.get(agent.faction, 0) + 1
+        # faction_counts = {}
+        # for agent in experiment.agents:
+        #     faction_counts[agent.faction] = faction_counts.get(agent.faction, 0) + 1
 
         report = f"""
 EXPERIMENT SUMMARY REPORT
 ========================
 
-Template: {experiment.template_name}
+Template: {experiment.template_id}
 Duration: {experiment.rounds} rounds
 Total Conversations: {len(conversations)}
 Total Messages: {total_messages}
@@ -107,15 +107,15 @@ Active Agents: {len(unique_agents)}
 
 FACTION BREAKDOWN:
 """
-        for faction, count in faction_counts.items():
-            report += f"- {faction.title()}: {count} agents\n"
+        # for faction, count in faction_counts.items():
+        #     report += f"- {faction.title()}: {count} agents\n"
 
         report += f"""
 DAILY ACTIVITY:
 """
         for day in range(1, experiment.rounds + 1):
-            day_conversations = [c for c in conversations if c.day == day]
-            day_messages = sum(len(c.messages) for c in day_conversations)
+            day_conversations = [c for c in conversations if c.day_no == day]
+            day_messages = sum(1 for c in day_conversations)
             report += f"Day {day}: {len(day_conversations)} conversations, {day_messages} messages\n"
 
         report += f"""

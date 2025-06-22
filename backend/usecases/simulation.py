@@ -18,6 +18,7 @@ class SimulationService:
         conversations_per_round: int = None,
         max_conversations_per_agent: int = None,
         max_message_length: int = None,
+        # experiment_id: str = None,
     ):
 
         self.repo = repo
@@ -51,6 +52,7 @@ class SimulationService:
             experiment_id=self.experiment_id,
             template_id=template_id,
             num_agents=len(self.agents),
+            rounds=self.rounds,
         )
         self.sequence_no = 0
 
@@ -154,10 +156,17 @@ class SimulationService:
         for agent in self.agents:
             agent.end(all_conversations)
 
+        experiment = Experiment(
+            experiment_id=self.experiment_id,
+            template_id=self.template_id,
+            template_description=self.template_data.get("description", ""),
+            num_agents=len(self.agents),
+            rounds=self.rounds,
+        )
         # Generate final report
         print("Generating final report...")
-        raw_report = self.moderator.review_conversations(
-            self.experiment_id, all_conversations
+        raw_report = await self.moderator.review_conversations(
+            experiment, all_conversations
         )
         self.repo.insert_experiment_result(
             ExperimentResult(self.experiment_id, raw_report)
