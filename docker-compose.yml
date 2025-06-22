@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  # Main application
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - LETTA_SERVER_URL=http://letta:8283
+      - DEFAULT_LLM_MODEL=gpt-4o-mini
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    depends_on:
+      - letta
+    volumes:
+      - ./:/app
+    command: python backend.py
+
+  # Letta server (optional - comment out for demo mode)
+  letta:
+    image: letta/letta:latest
+    ports:
+      - "8283:8283"
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - POSTGRES_URI=postgresql://letta:letta@postgres:5432/letta
+    depends_on:
+      - postgres
+
+  # PostgreSQL for Letta
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: letta
+      POSTGRES_USER: letta
+      POSTGRES_PASSWORD: letta
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
