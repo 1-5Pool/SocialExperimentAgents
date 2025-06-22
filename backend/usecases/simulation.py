@@ -2,7 +2,7 @@ import random
 import json
 from typing import List, Dict, Any
 from math import ceil
-from domain.entities import AgentCount, Conversation, ExperimentResult
+from domain.entities import AgentCount, Conversation, ExperimentResult, Experiment
 from infrastructure.db import DBRepository
 from services.agent.dummy import DummyAgent, DummyModerator
 from services.agent.interface import AgentInterface, ModeratorInterface
@@ -47,6 +47,11 @@ class SimulationService:
 
         # Create experiment
         self.experiment_id = self.repo.insert_experiment(template_id, len(self.agents))
+        self.experiment = Experiment(
+            experiment_id=self.experiment_id,
+            template_id=template_id,
+            num_agents=len(self.agents),
+        )
         self.sequence_no = 0
 
         # Insert agent counts
@@ -127,8 +132,7 @@ class SimulationService:
             counts[agent.role] = counts.get(agent.role, 0) + 1
 
         agent_counts = [
-            AgentCount(self.experiment_id, role, count)
-            for role, count in counts.items()
+            AgentCount(self.experiment, role, count) for role, count in counts.items()
         ]
         self.repo.insert_agent_counts(self.experiment_id, agent_counts)
 

@@ -1,5 +1,7 @@
 import uuid
 import json
+import sqlite3
+import threading
 from typing import List, Optional
 from domain.entities import (
     Experiment,
@@ -13,13 +15,31 @@ from config import get_connection
 
 class DBRepository:
     def __init__(self, db_path="simulation.db"):
-        self.conn = get_connection(db_path)
-        self.cursor = self.conn.cursor()
+        self.db_path = db_path
+        self._local = threading.local()
+        # Initialize schema with a temporary connection
         self._setup_schema()
         self._ensure_default_template()
 
+    def _get_connection(self):
+        """Get or create a connection for the current thread"""
+        if not hasattr(self._local, "connection"):
+            self._local.connection = sqlite3.connect(
+                self.db_path, check_same_thread=False  # Allow use across threads
+            )
+            self._local.connection.row_factory = sqlite3.Row
+        return self._local.connection
+
+    def _get_cursor(self):
+        """Get a cursor for the current thread"""
+        return self._get_connection().cursor()
+
     def _setup_schema(self):
-        self.cursor.execute(
+        # Use thread-local connection for schema setup
+        conn = self._get_connection()
+        cursor = self._get_cursor()
+
+        cursor.execute(
             """
         CREATE TABLE IF NOT EXISTS experiments (
             experiment_id TEXT PRIMARY KEY,
@@ -29,7 +49,7 @@ class DBRepository:
         )"""
         )
 
-        self.cursor.execute(
+        cursor.execute(
             """
         CREATE TABLE IF NOT EXISTS agent_counts (
             experiment_id TEXT,
@@ -39,7 +59,7 @@ class DBRepository:
         )"""
         )
 
-        self.cursor.execute(
+        cursor.execute(
             """
         CREATE TABLE IF NOT EXISTS conversations (
             experiment_id TEXT,
@@ -52,7 +72,7 @@ class DBRepository:
         )"""
         )
 
-        self.cursor.execute(
+        cursor.execute(
             """
         CREATE TABLE IF NOT EXISTS templates (
             template_id TEXT PRIMARY KEY,
@@ -61,7 +81,7 @@ class DBRepository:
         )"""
         )
 
-        self.cursor.execute(
+        cursor.execute(
             """
         CREATE TABLE IF NOT EXISTS experiment_results (
             experiment_id TEXT PRIMARY KEY,
@@ -70,14 +90,21 @@ class DBRepository:
         )"""
         )
 
-        self.conn.commit()
+        conn.commit()
 
     def _ensure_default_template(self):
-        self.cursor.execute("SELECT COUNT(*) FROM templates")
-        if self.cursor.fetchone()[0] == 0:
+        cursor = self._get_cursor()
+        conn = self._get_connection()
+
+        cursor.execute("SELECT COUNT(*) FROM templates")
+        resp = cursor.fetchone()
+        print(resp)
+        if resp[0] == 0:
+            print("Inserting default template...")
             default_template = {
                 "template_name": "Secret Hitler",
                 "rounds": 5,
+                "description": "Secret hitler game with politics",
                 "conversations_per_round": 6,
                 "content_prompt": "This is a chill setting where agents discuss politics",
                 "factions": {
@@ -104,50 +131,96 @@ class DBRepository:
                 },
             }
 
-            self.cursor.execute(
+            cursor.execute(
                 """
                 INSERT INTO templates (template_id, description, template_data) 
                 VALUES (?, ?, ?)
             """,
                 (
-                    "template-default",
+                    "secret_hitler",
                     "Default Secret Hitler template",
                     json.dumps(default_template),
                 ),
             )
-            self.conn.commit()
+            conn.commit()
 
     def get_all_templates(self) -> List[Template]:
         """Get all available templates"""
-        self.cursor.execute(
-            "SELECT template_id, description, template_data FROM templates"
-        )
-        rows = self.cursor.fetchall()
+        cursor = self._get_cursor()
+        cursor.execute("SELECT template_id, description, template_data FROM templates")
+        rows = cursor.fetchall()
+        print(rows)
         return [Template(row[0], row[1], row[2]) for row in rows]
+
+    def save_template(
+        self, template_id: str, description: str, template_data: dict
+    ) -> bool:
+        """Save or update a template"""
+        cursor = self._get_cursor()
+        conn = self._get_connection()
+
+        try:
+            # Check if template exists
+            cursor.execute(
+                "SELECT COUNT(*) FROM templates WHERE template_id = ?", (template_id,)
+            )
+            exists = cursor.fetchone()[0] > 0
+
+            if exists:
+                # Update existing template
+                cursor.execute(
+                    """
+                    UPDATE templates 
+                    SET description = ?, template_data = ?
+                    WHERE template_id = ?
+                    """,
+                    (description, json.dumps(template_data), template_id),
+                )
+            else:
+                # Insert new template
+                cursor.execute(
+                    """
+                    INSERT INTO templates (template_id, description, template_data)
+                    VALUES (?, ?, ?)
+                    """,
+                    (template_id, description, json.dumps(template_data)),
+                )
+
+            conn.commit()
+            return True
+        except Exception as e:
+            print(f"Error saving template: {e}")
+            conn.rollback()
+            return False
 
     def get_template_by_id(self, template_id: str) -> Optional[Template]:
         """Get specific template by ID"""
-        self.cursor.execute(
+        cursor = self._get_cursor()
+        cursor.execute(
             "SELECT template_id, description, template_data FROM templates WHERE template_id = ?",
             (template_id,),
         )
-        row = self.cursor.fetchone()
+        row = cursor.fetchone()
         if row:
             return Template(row[0], row[1], row[2])
         return None
 
     def insert_experiment(self, template_id: str, num_agents: int) -> str:
+        cursor = self._get_cursor()
+        conn = self._get_connection()
+
         exp_id = str(uuid.uuid4())
-        self.cursor.execute(
+        cursor.execute(
             "INSERT INTO experiments (experiment_id, template_id, num_agents) VALUES (?, ?, ?)",
             (exp_id, template_id, num_agents),
         )
-        self.conn.commit()
+        conn.commit()
         return exp_id
 
     def get_all_experiments(self):
         """Get all experiments with template info"""
-        self.cursor.execute(
+        cursor = self._get_cursor()
+        cursor.execute(
             """
             SELECT e.experiment_id, e.template_id, t.description, e.created_at
             FROM experiments e
@@ -155,18 +228,24 @@ class DBRepository:
             ORDER BY e.created_at DESC
         """
         )
-        return self.cursor.fetchall()
+        return cursor.fetchall()
 
     def insert_agent_counts(self, experiment_id: str, agent_counts: List[AgentCount]):
+        cursor = self._get_cursor()
+        conn = self._get_connection()
+
         for ac in agent_counts:
-            self.cursor.execute(
+            cursor.execute(
                 "INSERT INTO agent_counts (experiment_id, role, count) VALUES (?, ?, ?)",
                 (experiment_id, ac.role, ac.count),
             )
-        self.conn.commit()
+        conn.commit()
 
     def insert_conversation(self, conversation: Conversation):
-        self.cursor.execute(
+        cursor = self._get_cursor()
+        conn = self._get_connection()
+
+        cursor.execute(
             """
             INSERT INTO conversations (experiment_id, day_no, sequence_no, agent_1, agent_2, text)
             VALUES (?, ?, ?, ?, ?, ?)
@@ -180,20 +259,24 @@ class DBRepository:
                 conversation.text,
             ),
         )
-        self.conn.commit()
+        conn.commit()
 
     def insert_experiment_result(self, result: ExperimentResult):
-        self.cursor.execute(
+        cursor = self._get_cursor()
+        conn = self._get_connection()
+
+        cursor.execute(
             """
             INSERT INTO experiment_results (experiment_id, raw_report)
             VALUES (?, ?)
         """,
             (result.experiment_id, result.raw_report),
         )
-        self.conn.commit()
+        conn.commit()
 
     def get_all_conversations(self, experiment_id: str) -> List[Conversation]:
-        self.cursor.execute(
+        cursor = self._get_cursor()
+        cursor.execute(
             """
             SELECT experiment_id, day_no, sequence_no, agent_1, agent_2, text
             FROM conversations
@@ -202,17 +285,24 @@ class DBRepository:
         """,
             (experiment_id,),
         )
-        rows = self.cursor.fetchall()
+        rows = cursor.fetchall()
         return [Conversation(*row) for row in rows]
 
     def get_experiment_result(self, experiment_id: str) -> Optional[str]:
         """Get experiment result"""
-        self.cursor.execute(
+        cursor = self._get_cursor()
+        cursor.execute(
             """
             SELECT raw_report FROM experiment_results
             WHERE experiment_id = ?
         """,
             (experiment_id,),
         )
-        row = self.cursor.fetchone()
+        row = cursor.fetchone()
         return row[0] if row else None
+
+    def close(self):
+        """Close the thread-local connection"""
+        if hasattr(self._local, "connection"):
+            self._local.connection.close()
+            delattr(self._local, "connection")

@@ -81,7 +81,7 @@ class DummyAgent(AgentInterface):
 class DummyModerator(ModeratorInterface):
     """Dummy moderator implementation"""
 
-    async def generate_report(
+    async def review_conversations(
         self, experiment: Experiment, conversations: List[Conversation]
     ) -> str:
         """Generate a simple summary report"""

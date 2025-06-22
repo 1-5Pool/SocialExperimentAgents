@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Dict, Any, List
-from domain.entities import Conversation
+from domain.entities import Conversation, Experiment
 
 
 class AgentInterface(ABC):
@@ -11,12 +11,14 @@ class AgentInterface(ABC):
         faction_prompt: str,
         personal_prompt: str,
         powers: List[str],
+        role: str = "none",
     ):
         self.id = agent_id
         self.name = name
         self.faction_prompt = faction_prompt
         self.personal_prompt = personal_prompt
         self.powers = powers
+        self.role = role
         self.conversation_count = 0
         self.max_conversations_per_day = 3
         self.internal_state: Dict[str, Any] = {}
@@ -50,17 +52,6 @@ class ModeratorInterface(ABC):
 
     @abstractmethod
     def review_conversations(
-        self, experiment_id: str, conversations: List[Conversation]
-    ) -> str:
-        pass
-
-
-class ModeratorInterface(ABC):
-    def __init__(self, moderator_id: str):
-        self.id = moderator_id
-
-    @abstractmethod
-    def review_conversations(
-        self, experiment_id: str, conversations: List[Conversation]
+        self, experiment: Experiment, conversations: List[Conversation]
     ) -> str:
         pass

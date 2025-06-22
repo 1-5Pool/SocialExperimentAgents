@@ -80,6 +80,7 @@ def list_templates():
     for template in templates:
         try:
             template_data = json.loads(template.template_data)
+            print("Temp ", template_data, type(template_data))
             result.append(
                 {
                     "template_id": template.template_id,
@@ -89,7 +90,7 @@ def list_templates():
                     "conversations_per_round": template_data.get(
                         "conversations_per_round", 6
                     ),
-                    "factions": list(template_data.get("factions", {}).keys()),
+                    "factions": list(template_data.get("factions", {})),
                 }
             )
         except json.JSONDecodeError:
@@ -175,7 +176,7 @@ def create_template(request: CreateTemplateRequest):
                     detail=f"Faction '{faction_name}' must be an object",
                 )
 
-            faction_required = ["description", "agent_count"]
+            faction_required = ["agent_count"]
             faction_missing = [
                 field for field in faction_required if field not in faction_data
             ]
@@ -214,13 +215,13 @@ def create_template(request: CreateTemplateRequest):
             )
 
         # Convert template_data to JSON string for storage
-        template_data_json = json.dumps(request.template_data)
+        # template_data_json = json.dumps(request.template_data)
 
         # Save template to database
         success = repo.save_template(
             template_id=request.template_id,
             description=request.description,
-            template_data=template_data_json,
+            template_data=request.template_data,
         )
 
         if not success:
