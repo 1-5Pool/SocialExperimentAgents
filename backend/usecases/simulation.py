@@ -159,7 +159,7 @@ class SimulationService:
         print(f"Agents:  {self.agent_name_map}")
 
         for day in range(1, self.rounds + 1):
-            print(f"Running day {day}")
+            print(f"Running day {day}/{self.rounds}...")
             self._run_day(day)
 
         # End phase for all agents
@@ -227,7 +227,9 @@ class SimulationService:
                 self.sequence_no += 1
 
                 # Agent B responds to Agent A
-                msg_b = agent_b.send_message_to(agent_a, f"Responding to: {msg_a}...")
+                msg_b = agent_b.send_message_to(
+                    agent_a, f"{agent_a.name} says: {msg_a}..."
+                )
                 print("{} says to {}: {}\n\n".format(agent_b.name, agent_a.name, msg_b))
 
                 if len(msg_b) > self.max_message_length:
@@ -245,7 +247,7 @@ class SimulationService:
                 conversations_today.append(conv_b)
                 agent_a.receive_message(msg_b, agent_b)
                 self.sequence_no += 1
-                context = msg_b
+                context = f"{agent_b.name} says: {msg_b}"
 
         # Rest phase for all agents
         for agent in self.agents:

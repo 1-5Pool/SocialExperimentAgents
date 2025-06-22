@@ -18,7 +18,7 @@ class LettaAgent(AgentInterface):
     ):
         super().__init__(agent_id, name, faction_prompt, personal_prompt, powers, role)
         self.client = Letta(
-            token="sk-let-NWNiMjI3NDMtZjEzNC00OTM4LWE2MjctNTcyZTMyMzY4NWUxOmVjNWIzM2VjLTNhZTItNGE2Ny05YzQxLTBiZWNiYzU0NjNjNw=="
+            token="sk-let-NWNiMjI3NDMtZjEzNC00OTM4LWE2MjctNTcyZTMyMzY4NWUxOjJlYzU3NmU2LTRkOTktNDI1Yi05ZTJmLWY1MDg2NmVkYTQ0OQ=="
         )
         print("Creating {} with prompts {}".format(name, personal_prompt))
         # 2 2. sk-let-N2E4ZDJmM2YtZjM0My00YzBhLWJmODMtZDNiMDgzM2E3YjU3OjAwYTczNGIxLTRjNjQtNGUzNy04NjBlLTQwNmI0YmNmNDQ2Yg==
@@ -30,8 +30,8 @@ class LettaAgent(AgentInterface):
         # sk-let-OTQ0YjQyODEtOGJmOS00MmE0LTk1NjUtYWIwOWUwZTE2MWI0OmUxMmE1MGRkLTkzNDAtNGRmOC1iMjU2LTY0M2FlNmFmZjE0Mg==
         # sk-let-OTQ0YjQyODEtOGJmOS00MmE0LTk1NjUtYWIwOWUwZTE2MWI0OjU4Nzg2Y2NiLWU5ZTMtNGNlYS1iZDAzLTNhMDI3ZGM0NDM2OQ==
         # sk-let-NWNiMjI3NDMtZjEzNC00OTM4LWE2MjctNTcyZTMyMzY4NWUxOjJlYzU3NmU2LTRkOTktNDI1Yi05ZTJmLWY1MDg2NmVkYTQ0OQ==
-        # sk-let-NWNiMjI3NDMtZjEzNC00OTM4LWE2MjctNTcyZTMyMzY4NWUxOjBlYzljODczLTQ2NjEtNGZmMi1hMjliLTdjYWIwYjYxNzI0OQ==
-        # sk-let-NWNiMjI3NDMtZjEzNC00OTM4LWE2MjctNTcyZTMyMzY4NWUxOmVjNWIzM2VjLTNhZTItNGE2Ny05YzQxLTBiZWNiYzU0NjNjNw==
+        # done sk-let-NWNiMjI3NDMtZjEzNC00OTM4LWE2MjctNTcyZTMyMzY4NWUxOjBlYzljODczLTQ2NjEtNGZmMi1hMjliLTdjYWIwYjYxNzI0OQ==
+        # done sk-let-NWNiMjI3NDMtZjEzNC00OTM4LWE2MjctNTcyZTMyMzY4NWUxOmVjNWIzM2VjLTNhZTItNGE2Ny05YzQxLTBiZWNiYzU0NjNjNw==
 
         # paid one  sk-let-MDdiNTEzOWYtODU1Ni00NjY5LWI0MzctMTU1ZWFjMmU5ODU1OmZlZmQyN2IwLWQ3NTgtNDZlMi04M2E3LTUyZjIzOGRjYzE3NA==
         self.agent = self.client.agents.create(
@@ -51,7 +51,7 @@ class LettaAgent(AgentInterface):
         """Generate a message to send to another agent"""
         response = self.client.agents.messages.create(
             agent_id=self.agent_id,
-            messages=[{"role": "user", "content": f"{other.name} said: {context} "}],
+            messages=[{"role": "user", "content": f"{context} "[:2000]}],
         )
         if response and response.messages:
             return response.messages[-1].content
@@ -102,7 +102,7 @@ class LettaModerator(ModeratorInterface):
     def __init__(self, moderator_id: str):
         super().__init__(moderator_id)
         self.client = Letta(
-            token="sk-let-NWNiMjI3NDMtZjEzNC00OTM4LWE2MjctNTcyZTMyMzY4NWUxOmVjNWIzM2VjLTNhZTItNGE2Ny05YzQxLTBiZWNiYzU0NjNjNw=="
+            token="sk-let-NWNiMjI3NDMtZjEzNC00OTM4LWE2MjctNTcyZTMyMzY4NWUxOjJlYzU3NmU2LTRkOTktNDI1Yi05ZTJmLWY1MDg2NmVkYTQ0OQ=="
         )
         self.agent = self.client.agents.create(
             model="openai/gpt-4.1",
