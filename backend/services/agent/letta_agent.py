@@ -18,10 +18,8 @@ class LettaAgent(AgentInterface):
     ):
         super().__init__(agent_id, name, faction_prompt, personal_prompt, powers, role)
         self.client = Letta(
-            token="sk-let-NWNiMjI3NDMtZjEzNC00OTM4LWE2MjctNTcyZTMyMzY4NWUxOjJlYzU3NmU2LTRkOTktNDI1Yi05ZTJmLWY1MDg2NmVkYTQ0OQ=="
+            token="sk-let-ZjFhNzEyNGItYTA2Ny00ZTdiLWE1NzMtYmU4N2Y5YjIwOWU3OjM1MjFiNmJkLWYwYTMtNGY5Ni05Y2IyLWI3MmFlYzRkNmQxMA=="
         )
-        print("Creating {} with prompts {}".format(name, personal_prompt))
-        # 2 2. sk-let-N2E4ZDJmM2YtZjM0My00YzBhLWJmODMtZDNiMDgzM2E3YjU3OjAwYTczNGIxLTRjNjQtNGUzNy04NjBlLTQwNmI0YmNmNDQ2Yg==
         # sk-let-ZjFhNzEyNGItYTA2Ny00ZTdiLWE1NzMtYmU4N2Y5YjIwOWU3OjNiM2ViYzcyLTMxNDUtNDc1ZS04MDE0LWM0OGRlNzUzMTg4NA==
         # sk-let-ZjFhNzEyNGItYTA2Ny00ZTdiLWE1NzMtYmU4N2Y5YjIwOWU3OmU1Zjk1ZmFiLTQ4NDAtNGYwZi1hMmJiLWY3OTY5NWNmZDJkNg==
         # sk-let-ZjFhNzEyNGItYTA2Ny00ZTdiLWE1NzMtYmU4N2Y5YjIwOWU3OjMxYWI2ZTIzLTE4MmMtNDczZS1hYjZmLTg5MzZmM2RlM2Y4NA==
@@ -36,6 +34,7 @@ class LettaAgent(AgentInterface):
         # paid one  sk-let-MDdiNTEzOWYtODU1Ni00NjY5LWI0MzctMTU1ZWFjMmU5ODU1OmZlZmQyN2IwLWQ3NTgtNDZlMi04M2E3LTUyZjIzOGRjYzE3NA==
         self.agent = self.client.agents.create(
             model="openai/gpt-4.1",
+            context_window_limit=16000,
             embedding="openai/text-embedding-3-small",
             memory_blocks=[
                 {
@@ -102,7 +101,7 @@ class LettaModerator(ModeratorInterface):
     def __init__(self, moderator_id: str):
         super().__init__(moderator_id)
         self.client = Letta(
-            token="sk-let-NWNiMjI3NDMtZjEzNC00OTM4LWE2MjctNTcyZTMyMzY4NWUxOjJlYzU3NmU2LTRkOTktNDI1Yi05ZTJmLWY1MDg2NmVkYTQ0OQ=="
+            token="sk-let-ZjFhNzEyNGItYTA2Ny00ZTdiLWE1NzMtYmU4N2Y5YjIwOWU3OjM1MjFiNmJkLWYwYTMtNGY5Ni05Y2IyLWI3MmFlYzRkNmQxMA=="
         )
         self.agent = self.client.agents.create(
             model="openai/gpt-4.1",
@@ -124,10 +123,10 @@ class LettaModerator(ModeratorInterface):
 
         input_conv = ""
         for day in range(1, experiment.rounds + 1):
-            day_conversations = [c for c in conversations if c.day == day]
+            day_conversations = [c for c in conversations if c.day_no == day]
             day_conversations.sort(key=lambda c: (c.agent_1, c.agent_2, c.sequence_no))
             # day_messages = sum(len(c.messages) for c in day_conversations)
-            input_conv += f"Day {day}: {len(day_conversations)} conversations, {day_messages} messages\n"
+            input_conv += f"Day {day}: {len(day_conversations)} conversations\n"
             for message in day_conversations:
                 input_conv += (
                     f"{message.agent_1} to {message.agent_2}: {message.text}\n"
