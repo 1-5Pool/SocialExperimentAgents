@@ -7,6 +7,7 @@ from usecases.simulation import SimulationService
 from services.agent.dummy import DummyModerator
 from collections import defaultdict
 import json
+import traceback
 
 app = FastAPI(title="Social Experiment Simulation Platform", version="1.0.0")
 repo = DBRepository("simulation.db")
@@ -29,7 +30,7 @@ class CreateTemplateRequest(BaseModel):
     template_data: Dict[str, Any]
 
 
-def run_experiment_background(request: RunExperimentRequest):
+async def run_experiment_background(request: RunExperimentRequest):
     """Background task to run experiment"""
     try:
         moderator = DummyModerator("mod-001")
@@ -42,13 +43,14 @@ def run_experiment_background(request: RunExperimentRequest):
             max_conversations_per_agent=request.max_conversations_per_agent,
             max_message_length=request.max_message_length,
         )
-        experiment_id = sim.run()
-
+        experiment_id = await sim.run()
+        print(experiment_id)
         # Mark as completed
         if experiment_id in running_experiments:
             running_experiments[experiment_id] = "completed"
 
     except Exception as e:
+        traceback.print_exc()
         print(f"Error running experiment: {e}")
         # Mark as failed - find the running experiment and mark it as failed
         for exp_id, status in list(running_experiments.items()):

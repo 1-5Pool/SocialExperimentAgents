@@ -144,28 +144,28 @@ curl -s -X POST "$BASE_URL/run_experiment" \
   }' | jq '.'
 echo -e "\n"
 
-echo "📍 13. Starting Second Experiment - Business Negotiation"
-EXPERIMENT_2=$(curl -s -X POST "$BASE_URL/run_experiment" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "template_id": "business_negotiation_v1"
-  }' | jq -r '.experiment_id')
+# echo "📍 13. Starting Second Experiment - Business Negotiation"
+# EXPERIMENT_2=$(curl -s -X POST "$BASE_URL/run_experiment" \
+#   -H "Content-Type: application/json" \
+#   -d '{
+#     "template_id": "business_negotiation_v1"
+#   }' | jq -r '.experiment_id')
 
-echo "Started experiment: $EXPERIMENT_2"
-curl -s -X POST "$BASE_URL/run_experiment" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "template_id": "business_negotiation_v1"
-  }' | jq '.'
-echo -e "\n"
+# echo "Started experiment: $EXPERIMENT_2"
+# curl -s -X POST "$BASE_URL/run_experiment" \
+#   -H "Content-Type: application/json" \
+#   -d '{
+#     "template_id": "business_negotiation_v1"
+#   }' | jq '.'
+# echo -e "\n"
 
-echo "📍 14. Trying to Start Experiment with Non-existent Template (should fail)"
-curl -s -X POST "$BASE_URL/run_experiment" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "template_id": "non_existent_template"
-  }' | jq '.'
-echo -e "\n"
+# echo "📍 14. Trying to Start Experiment with Non-existent Template (should fail)"
+# curl -s -X POST "$BASE_URL/run_experiment" \
+#   -H "Content-Type: application/json" \
+#   -d '{
+#     "template_id": "non_existent_template"
+#   }' | jq '.'
+# echo -e "\n"
 
 echo "📍 15. Listing All Experiments (should show 2 experiments)"
 curl -s "$BASE_URL/experiments" | jq '.'
@@ -184,32 +184,32 @@ else
 fi
 echo -e "\n"
 
-# echo "📍 17. Getting Details of First Experiment"
-# if [ "$EXPERIMENT_1" != "null" ] && [ -n "$EXPERIMENT_1" ]; then
-#     curl -s "$BASE_URL/experiments/$EXPERIMENT_1" | jq '.'
-# else
-#     echo "Experiment ID not available, using placeholder"
-#     curl -s "$BASE_URL/experiments/test_experiment_id" | jq '.'
-# fi
-# echo -e "\n"
+echo "📍 17. Getting Details of First Experiment"
+if [ "$EXPERIMENT_1" != "null" ] && [ -n "$EXPERIMENT_1" ]; then
+    curl -s "$BASE_URL/experiments/$EXPERIMENT_1" | jq '.'
+else
+    echo "Experiment ID not available, using placeholder"
+    curl -s "$BASE_URL/experiments/test_experiment_id" | jq '.'
+fi
+echo -e "\n"
 
-# echo "📍 18. Getting Conversations from First Experiment"
-# if [ "$EXPERIMENT_1" != "null" ] && [ -n "$EXPERIMENT_1" ]; then
-#     curl -s "$BASE_URL/experiments/$EXPERIMENT_1/conversations" | jq '.'
-# else
-#     echo "Experiment ID not available, using placeholder"
-#     curl -s "$BASE_URL/experiments/test_experiment_id/conversations" | jq '.'
-# fi
-# echo -e "\n"
+echo "📍 18. Getting Conversations from First Experiment"
+if [ "$EXPERIMENT_1" != "null" ] && [ -n "$EXPERIMENT_1" ]; then
+    curl -s "$BASE_URL/experiments/$EXPERIMENT_1/conversations" | jq '.'
+else
+    echo "Experiment ID not available, using placeholder"
+    curl -s "$BASE_URL/experiments/test_experiment_id/conversations" | jq '.'
+fi
+echo -e "\n"
 
-# echo "📍 19. Getting Results from First Experiment"
-# if [ "$EXPERIMENT_1" != "null" ] && [ -n "$EXPERIMENT_1" ]; then
-#     curl -s "$BASE_URL/experiments/$EXPERIMENT_1/result" | jq '.'
-# else
-#     echo "Experiment ID not available, using placeholder"
-#     curl -s "$BASE_URL/experiments/test_experiment_id/result" | jq '.'
-# fi
-# echo -e "\n"
+echo "📍 19. Getting Results from First Experiment"
+if [ "$EXPERIMENT_1" != "null" ] && [ -n "$EXPERIMENT_1" ]; then
+    curl -s "$BASE_URL/experiments/$EXPERIMENT_1/result" | jq '.'
+else
+    echo "Experiment ID not available, using placeholder"
+    curl -s "$BASE_URL/experiments/test_experiment_id/result" | jq '.'
+fi
+echo -e "\n"
 
 # echo "📍 20. Testing Non-existent Experiment Status"
 # curl -s "$BASE_URL/experiments/non_existent_experiment/status" | jq '.'

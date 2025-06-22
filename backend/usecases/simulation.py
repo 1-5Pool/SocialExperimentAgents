@@ -136,7 +136,7 @@ class SimulationService:
         ]
         self.repo.insert_agent_counts(self.experiment_id, agent_counts)
 
-    def run(self) -> str:
+    async def run(self) -> str:
         """Run the complete simulation"""
         print(
             f"Starting simulation with {len(self.agents)} agents for {self.rounds} rounds"
