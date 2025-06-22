@@ -7,6 +7,7 @@ from infrastructure.db import DBRepository
 from services.agent.dummy import DummyAgent, DummyModerator
 from services.agent.letta_agent import LettaAgent, DummyModerator
 from services.agent.interface import AgentInterface, ModeratorInterface
+import faker
 
 
 class SimulationService:
@@ -25,7 +26,7 @@ class SimulationService:
         self.repo = repo
         self.template_id = template_id
         self.moderator = moderator or DummyModerator("mod-001")
-
+        self.faker = faker.Faker()
         # Load template
         template = repo.get_template_by_id(template_id)
         if not template:
@@ -78,7 +79,7 @@ class SimulationService:
             )
 
             for i in range(agent_count):
-                agent_name = f"Agent_{agent_counter}"
+                agent_name = self.faker.name()
                 agent_id = f"agent_{agent_counter}"
 
                 # Get the personal prompt for this agent and inject name
@@ -99,8 +100,12 @@ class SimulationService:
                 agent.max_conversations_per_day = self.max_conversations_per_agent
 
                 self.agents.append(agent)
-                self.agent_name_map[agent_name] = agent
-                self.agent_name_map[agent_id] = agent  # Also map by ID
+                self.agent_name_map[agent_name] = {
+                    "faction": faction_name,
+                    "prompt": personal_prompt,
+                    "agent_id": agent_id,
+                }
+                # self.agent_name_map[agent_id] = agent  # Also map by ID
 
                 agent_counter += 1
 
@@ -150,6 +155,7 @@ class SimulationService:
         print(
             f"Agent distribution: {', '.join([f'{agent.role}:{agent.name}' for agent in self.agents])}"
         )
+        print(f"Agents:  {self.agent_name_map}")
 
         for day in range(1, self.rounds + 1):
             print(f"Running day {day}")
@@ -188,7 +194,9 @@ class SimulationService:
         # Generate conversation pairs
         pairs = self._generate_conversation_pairs()
 
-        context = f"Day {day} of {self.template_data.get('template_name', 'experiment')}. {self.template_data.get('content_prompt', '')}"
+        context = (
+            f"Day {day} of this meeting. {self.template_data.get('content_prompt', '')}"
+        )
 
         conversations_today = []
 
