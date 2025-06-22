@@ -7,6 +7,7 @@ from infrastructure.db import DBRepository
 from services.agent.dummy import DummyAgent, DummyModerator
 from services.agent.letta_agent import LettaAgent, DummyModerator
 from services.agent.interface import AgentInterface, ModeratorInterface
+import json
 import faker
 
 
@@ -163,6 +164,10 @@ class SimulationService:
 
         # End phase for all agents
         all_conversations = self.repo.get_all_conversations(self.experiment_id)
+        for c in all_conversations:
+            print(
+                f'Conversation: |{c.agent_1[:15]:<15}:{self.agent_name_map[c.agent_1]["faction"][:15]:<15}:{self.agent_name_map[c.agent_1]["prompt"][-40:]:<40}| -> |{c.agent_2[:15]:<15}|: \nText: {c.text}\n'
+            )
         for agent in self.agents:
             agent.end(all_conversations)
 
@@ -194,19 +199,20 @@ class SimulationService:
         # Generate conversation pairs
         pairs = self._generate_conversation_pairs()
 
-        context = (
-            f"Day {day} of this meeting. {self.template_data.get('content_prompt', '')}"
-        )
+        # context=  f"Day {day} of this meeting. {self.template_data.get('content_prompt', '')}"
+        context = "Day {day} of this meeting. You approach {agent_name} and start a conversation: "
 
         conversations_today = []
 
         for agent_a, agent_b in pairs:
-            if agent_a.can_participate() and agent_b.can_participate():
+            # if agent_a.can_participate() and agent_b.can_participate():
+            for i in range(self.conversations_per_round):
                 # Agent A sends message to Agent B
+                context = context.format(day=day, agent_name=agent_b.name)
                 msg_a = agent_a.send_message_to(agent_b, context)
                 # if len(msg_a) > self.max_message_length:
                 #     msg_a = msg_a[: self.max_message_length]
-
+                print("{} says to {}: {}".format(agent_a.name, agent_b.name, msg_a))
                 conv_a = Conversation(
                     self.experiment_id,
                     day,
@@ -222,6 +228,8 @@ class SimulationService:
 
                 # Agent B responds to Agent A
                 msg_b = agent_b.send_message_to(agent_a, f"Responding to: {msg_a}...")
+                print("{} says to {}: {}".format(agent_b.name, agent_a.name, msg_a))
+
                 if len(msg_b) > self.max_message_length:
                     msg_b = msg_b[: self.max_message_length]
 
@@ -237,6 +245,7 @@ class SimulationService:
                 conversations_today.append(conv_b)
                 agent_a.receive_message(msg_b, agent_b)
                 self.sequence_no += 1
+                context = msg_b
 
         # Rest phase for all agents
         for agent in self.agents:
@@ -249,11 +258,12 @@ class SimulationService:
 
     def _generate_conversation_pairs(self) -> List[tuple]:
         """Generate conversation pairs respecting agent limits and max conversations per round"""
-        available_agents = [agent for agent in self.agents if agent.can_participate()]
+        available_agents = [agent for agent in self.agents]
         pairs = []
 
         # Limit by conversations per round
-        max_pairs = min(self.conversations_per_round, len(available_agents) // 2)
+        # max_pairs = min(self.conversations_per_round, len(available_agents) // 2)
+        max_pairs = 3
 
         attempts = 0
         max_attempts = max_pairs * 10  # Prevent infinite loops
