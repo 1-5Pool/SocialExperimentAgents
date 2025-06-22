@@ -18,20 +18,8 @@ class LettaAgent(AgentInterface):
     ):
         super().__init__(agent_id, name, faction_prompt, personal_prompt, powers, role)
         self.client = Letta(
-            token="sk-let-ZjFhNzEyNGItYTA2Ny00ZTdiLWE1NzMtYmU4N2Y5YjIwOWU3OjM1MjFiNmJkLWYwYTMtNGY5Ni05Y2IyLWI3MmFlYzRkNmQxMA=="
+            token="sk-let-ZDExYzJjNTItODUyYy00MGEyLWI3NWQtYmVlODU2ZWFlZWMwOjUxMGY1YTJhLWM5MDctNDRkNS05MmE5LWVhOTAxYmJiZmYwMw=="
         )
-        # sk-let-ZjFhNzEyNGItYTA2Ny00ZTdiLWE1NzMtYmU4N2Y5YjIwOWU3OjNiM2ViYzcyLTMxNDUtNDc1ZS04MDE0LWM0OGRlNzUzMTg4NA==
-        # sk-let-ZjFhNzEyNGItYTA2Ny00ZTdiLWE1NzMtYmU4N2Y5YjIwOWU3OmU1Zjk1ZmFiLTQ4NDAtNGYwZi1hMmJiLWY3OTY5NWNmZDJkNg==
-        # sk-let-ZjFhNzEyNGItYTA2Ny00ZTdiLWE1NzMtYmU4N2Y5YjIwOWU3OjMxYWI2ZTIzLTE4MmMtNDczZS1hYjZmLTg5MzZmM2RlM2Y4NA==
-        # sk-let-ZjFhNzEyNGItYTA2Ny00ZTdiLWE1NzMtYmU4N2Y5YjIwOWU3OjBmZmFmMzIwLWYwN2MtNDY2Ny1hYTE3LWUyNjc2NTA5YmVlMw==
-        # sk-let-OTQ0YjQyODEtOGJmOS00MmE0LTk1NjUtYWIwOWUwZTE2MWI0OmE4MGVhNjMzLTljYjItNDRhYi1hYjNmLWJlMDhjNzM0OTg0Mw==
-        # sk-let-OTQ0YjQyODEtOGJmOS00MmE0LTk1NjUtYWIwOWUwZTE2MWI0OmUxMmE1MGRkLTkzNDAtNGRmOC1iMjU2LTY0M2FlNmFmZjE0Mg==
-        # sk-let-OTQ0YjQyODEtOGJmOS00MmE0LTk1NjUtYWIwOWUwZTE2MWI0OjU4Nzg2Y2NiLWU5ZTMtNGNlYS1iZDAzLTNhMDI3ZGM0NDM2OQ==
-        # sk-let-NWNiMjI3NDMtZjEzNC00OTM4LWE2MjctNTcyZTMyMzY4NWUxOjJlYzU3NmU2LTRkOTktNDI1Yi05ZTJmLWY1MDg2NmVkYTQ0OQ==
-        # done sk-let-NWNiMjI3NDMtZjEzNC00OTM4LWE2MjctNTcyZTMyMzY4NWUxOjBlYzljODczLTQ2NjEtNGZmMi1hMjliLTdjYWIwYjYxNzI0OQ==
-        # done sk-let-NWNiMjI3NDMtZjEzNC00OTM4LWE2MjctNTcyZTMyMzY4NWUxOmVjNWIzM2VjLTNhZTItNGE2Ny05YzQxLTBiZWNiYzU0NjNjNw==
-
-        # paid one  sk-let-MDdiNTEzOWYtODU1Ni00NjY5LWI0MzctMTU1ZWFjMmU5ODU1OmZlZmQyN2IwLWQ3NTgtNDZlMi04M2E3LTUyZjIzOGRjYzE3NA==
         self.agent = self.client.agents.create(
             model="openai/gpt-4.1",
             context_window_limit=16000,
@@ -101,7 +89,7 @@ class LettaModerator(ModeratorInterface):
     def __init__(self, moderator_id: str):
         super().__init__(moderator_id)
         self.client = Letta(
-            token="sk-let-ZjFhNzEyNGItYTA2Ny00ZTdiLWE1NzMtYmU4N2Y5YjIwOWU3OjM1MjFiNmJkLWYwYTMtNGY5Ni05Y2IyLWI3MmFlYzRkNmQxMA=="
+            token="sk-let-ZDExYzJjNTItODUyYy00MGEyLWI3NWQtYmVlODU2ZWFlZWMwOjUxMGY1YTJhLWM5MDctNDRkNS05MmE5LWVhOTAxYmJiZmYwMw=="
         )
         self.agent = self.client.agents.create(
             model="openai/gpt-4.1",
@@ -109,7 +97,7 @@ class LettaModerator(ModeratorInterface):
             memory_blocks=[
                 {
                     "label": f"persona",
-                    "value": f"You are a sting journalist who has obtained the meeting notes for a social experiment. Your task is to review the conversations and generate a report on what seems unusual in the conversations.",
+                    "value": f"You are a sting journalist who has obtained the meeting notes for a social experiment. Your task is to review the conversations and generate a report on what seems unusual in the conversations. Generate a report about each of the suspcious users and their profiling. This is your final report, do not ask any follow up questions.",
                 }
             ],
             tools=[],

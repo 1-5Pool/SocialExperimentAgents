@@ -265,7 +265,7 @@ class SimulationService:
 
         # Limit by conversations per round
         # max_pairs = min(self.conversations_per_round, len(available_agents) // 2)
-        max_pairs = 1
+        max_pairs = 2
 
         attempts = 0
         max_attempts = max_pairs * 10  # Prevent infinite loops
