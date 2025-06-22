@@ -129,7 +129,7 @@ echo "📍 12. Starting First Experiment - Political Debate"
 EXPERIMENT_1=$(curl -s -X POST "$BASE_URL/run_experiment" \
   -H "Content-Type: application/json" \
   -d '{
-    "template_id": "political_debate_v1",
+    "template_id": "coffee_misinformation",
     "rounds": 2,
     "conversations_per_round": 3
   }' | jq -r '.experiment_id')

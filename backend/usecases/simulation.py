@@ -5,6 +5,7 @@ from math import ceil
 from domain.entities import AgentCount, Conversation, ExperimentResult, Experiment
 from infrastructure.db import DBRepository
 from services.agent.dummy import DummyAgent, DummyModerator
+from services.agent.letta_agent import LettaAgent, DummyModerator
 from services.agent.interface import AgentInterface, ModeratorInterface
 
 
@@ -29,6 +30,7 @@ class SimulationService:
         template = repo.get_template_by_id(template_id)
         if not template:
             raise ValueError(f"Template {template_id} not found")
+        self.template = template
 
         self.template_data = json.loads(template.template_data)
 
@@ -65,6 +67,7 @@ class SimulationService:
 
         for faction_name, faction_data in self.template_data["factions"].items():
             agent_count = faction_data.get("agent_count", 1)
+            common_prompt = self.template.description
             faction_prompt = faction_data.get("faction_prompt", "")
             person_prompts = faction_data.get("person_prompt", [])
             powers = faction_data.get("powers", [])
@@ -83,10 +86,11 @@ class SimulationService:
                 if personal_prompt:
                     personal_prompt = personal_prompt.format(name=agent_name)
 
-                agent = DummyAgent(
+                agent = LettaAgent(
                     agent_id=agent_id,
                     name=agent_name,
                     role=faction_name,
+                    common_prompt=common_prompt,
                     faction_prompt=faction_prompt,
                     personal_prompt=personal_prompt,
                     powers=powers,
@@ -192,8 +196,8 @@ class SimulationService:
             if agent_a.can_participate() and agent_b.can_participate():
                 # Agent A sends message to Agent B
                 msg_a = agent_a.send_message_to(agent_b, context)
-                if len(msg_a) > self.max_message_length:
-                    msg_a = msg_a[: self.max_message_length]
+                # if len(msg_a) > self.max_message_length:
+                #     msg_a = msg_a[: self.max_message_length]
 
                 conv_a = Conversation(
                     self.experiment_id,
@@ -209,9 +213,7 @@ class SimulationService:
                 self.sequence_no += 1
 
                 # Agent B responds to Agent A
-                msg_b = agent_b.send_message_to(
-                    agent_a, f"Responding to: {msg_a[:50]}..."
-                )
+                msg_b = agent_b.send_message_to(agent_a, f"Responding to: {msg_a}...")
                 if len(msg_b) > self.max_message_length:
                     msg_b = msg_b[: self.max_message_length]
 

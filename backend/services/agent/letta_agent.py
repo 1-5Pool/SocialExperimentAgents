@@ -10,6 +10,7 @@ class LettaAgent(AgentInterface):
         self,
         agent_id: str,
         name: str,
+        common_prompt: str,
         faction_prompt: str,
         personal_prompt: str,
         powers: List[str],
@@ -19,12 +20,24 @@ class LettaAgent(AgentInterface):
         self.client = Letta(
             token="sk-let-MDdiNTEzOWYtODU1Ni00NjY5LWI0MzctMTU1ZWFjMmU5ODU1OmZlZmQyN2IwLWQ3NTgtNDZlMi04M2E3LTUyZjIzOGRjYzE3NA=="
         )
+        self.agent = self.client.agents.create(
+            model="openai/gpt-4.1",
+            embedding="openai/text-embedding-3-small",
+            memory_blocks=[
+                {
+                    "label": f"persona",
+                    "value": f"{common_prompt} {faction_prompt} {personal_prompt}",
+                }
+            ],
+            tools=[],
+        )
+        self.agent_id = self.agent.id
 
-    def send_message_to(self, other: "DummyAgent", context: str = "") -> str:
+    def send_message_to(self, other: "LettaAgent", context: str = "") -> str:
         """Generate a message to send to another agent"""
         response = self.client.agents.messages.create(
-            agent_id=other.agent_id,
-            messages=[{"role": "user", "content": f"{context}"}],
+            agent_id=other.agent.id,
+            messages=[{"role": "user", "content": f"{context} "}],
         )
         if response and response.messages:
             return response.messages[-1].content

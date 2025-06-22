@@ -111,31 +111,30 @@ class DBRepository:
         if resp[0] == 0:
             print("Inserting default template...")
             default_template = {
-                "template_name": "Secret Hitler",
+                "template_name": "Coffee wars",
                 "rounds": 5,
-                "description": "Secret hitler game with politics",
+                "description": "You are in a coffee shop where you are discussing your coffee preferences",
                 "conversations_per_round": 6,
-                "content_prompt": "This is a chill setting where agents discuss politics",
+                # "content_prompt": "This is a chill setting where agents discuss politics",
                 "factions": {
-                    "liberal": {
-                        "faction_prompt": "You believe in freedom and democracy",
+                    "coffee_fan": {
+                        "faction_prompt": "You believe in freedom and coffee",
                         "person_prompt": [
-                            "You are {name}, a secretive liberal who keeps their true beliefs hidden",
-                            "You are {name}, a police officer working undercover as a liberal",
-                            "You are {name}, a passionate advocate for civil liberties",
-                        ],
-                        "agent_count": 9,
-                        "powers": ["vote"],
-                    },
-                    "fascist": {
-                        "faction_prompt": "You believe in strong authoritarian leadership",
-                        "person_prompt": [
-                            "You are {name}, subtle yet persistent in pushing fascist ideals",
-                            "You are {name}, a charismatic leader who masks extreme views",
-                            "You are {name}, an opportunist who sees fascism as a path to power",
+                            "You are {name}, you love coffee and drink it everyday",
+                            # "You are {name}, a police officer working undercover as a liberal",
+                            # "You are {name}, a passionate advocate for civil liberties",
                         ],
                         "agent_count": 3,
-                        "powers": ["kill", "investigate"],
+                        # "powers": ["vote"],
+                    },
+                    "coffee_hater": {
+                        "faction_prompt": "You believe in coffee prohibition",
+                        "person_prompt": [
+                            "You are {name}, you believe coffee causes cancer",
+                            "You are {name}, you dislike coffee and want to ban it",
+                        ],
+                        "agent_count": 2,
+                        # "powers": ["kill", "investigate"],
                     },
                 },
             }
@@ -146,7 +145,7 @@ class DBRepository:
                 VALUES (?, ?, ?)
             """,
                 (
-                    "secret_hitler",
+                    "coffee_misinformation",
                     "Default Secret Hitler template",
                     json.dumps(default_template),
                 ),

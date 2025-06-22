@@ -1,3 +1,4 @@
 fastapi
 uvicorn
 pydantic
+letta_client

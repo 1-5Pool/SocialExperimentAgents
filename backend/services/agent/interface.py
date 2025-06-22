@@ -8,6 +8,7 @@ class AgentInterface(ABC):
         self,
         agent_id: str,
         name: str,
+        common_prompt: str,
         faction_prompt: str,
         personal_prompt: str,
         powers: List[str],
@@ -15,6 +16,7 @@ class AgentInterface(ABC):
     ):
         self.id = agent_id
         self.name = name
+        self.common_prompt = common_prompt
         self.faction_prompt = faction_prompt
         self.personal_prompt = personal_prompt
         self.powers = powers
