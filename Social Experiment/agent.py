@@ -190,7 +190,7 @@ class MultiAgentConversation:
                 last_message = response
                 
                 # Small delay for readability
-                time.sleep(1)
+                
         
         print("🏁 Conversation completed!")
         print("=" * 60)

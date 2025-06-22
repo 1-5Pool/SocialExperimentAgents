@@ -57,7 +57,14 @@ async def run_experiment_background(
         #     # experiment_id=experiment_id,  # Pass the existing experiment_id
         # )
 
-        await sim.run()
+        import threading
+        
+        def run_simulation():
+            import asyncio
+            asyncio.run(sim.run())
+        
+        thread = threading.Thread(target=run_simulation)
+        thread.start()
         print(f"Experiment {experiment_id} completed successfully")
 
         # Update status to completed

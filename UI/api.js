@@ -36,6 +36,14 @@ class ExperimentAPI {
                 },
                 body: JSON.stringify(templateData)
             });
+            
+            if (!response.ok) {
+                const errorData = await response.json();
+                const error = new Error(errorData.detail || `HTTP ${response.status}`);
+                error.status = response.status;
+                throw error;
+            }
+            
             return await response.json();
         } catch (error) {
             console.error('Error creating template:', error);

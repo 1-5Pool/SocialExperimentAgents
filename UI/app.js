@@ -187,7 +187,7 @@ function updateSlider() {
     document.getElementById('agentValue').textContent = document.getElementById('agentCount').value;
 }
 
-function nextStep() {
+async function nextStep() {
     if (currentStep === 1 && !selectedExperiment) {
         alert('Please select an experiment first!');
         return;
@@ -198,6 +198,8 @@ function nextStep() {
         currentStep = 2;
         updateStepDisplay();
     } else if (currentStep === 2) {
+        // Check for template changes before proceeding
+        await detectTemplateChanges();
         currentStep = 3;
         updateStepDisplay();
     }
@@ -358,6 +360,7 @@ function showNotification(message, type = 'info') {
 async function startSimulation() {
     if (!selectedExperiment) return;
     
+    notificationShown = false; // Reset notification flag
     simulationRunning = true;
     currentStep = 4;
     updateStepDisplay();
@@ -382,10 +385,8 @@ async function createAgentDisplayFromTemplate() {
     const agentGrid = document.getElementById('agentGrid');
     agentGrid.innerHTML = '<div class="loading"><div class="spinner"></div><p>Creating agents...</p></div>';
     
-    // Create template and get agent info
     try {
         const templateData = getTemplateData(selectedExperiment);
-        await experimentAPI.createTemplate(templateData);
         
         // Calculate total agents from template
         let totalAgents = 0;
@@ -434,10 +435,21 @@ async function startBackendSimulation() {
         showNotification('Starting simulation...', 'info');
         
         const activeTemplateId = getActiveTemplateId();
+        const templateData = getTemplateData(selectedExperiment);
+        
+        // Use modified values if available, otherwise template defaults
+        const rounds = modifiedTemplateId ? 
+            parseInt(document.getElementById('template-rounds')?.value) || templateData.template_data.rounds :
+            templateData.template_data.rounds;
+            
+        const conversationsPerRound = modifiedTemplateId ?
+            parseInt(document.getElementById('template-conversations')?.value) || templateData.template_data.conversations_per_round :
+            templateData.template_data.conversations_per_round;
+        
         const config = {
             template_id: activeTemplateId,
-            rounds: 5,
-            conversations_per_round: 4
+            rounds: rounds,
+            conversations_per_round: conversationsPerRound
         };
         
         const result = await experimentAPI.runExperiment(config);
@@ -606,7 +618,7 @@ function loadFactionsConfig() {
     });
 }
 
-function detectTemplateChanges() {
+async function detectTemplateChanges() {
     const originalData = getTemplateData(selectedExperiment);
     let hasChanges = false;
     
@@ -636,8 +648,8 @@ function detectTemplateChanges() {
     });
     
     if (hasChanges) {
-        showNotification('Changes detected! Will create modified template.', 'info');
-        createModifiedTemplate();
+        showNotification('Changes detected! Creating modified template...', 'info');
+        await createModifiedTemplate();
     } else {
         showNotification('No changes detected. Using original template.', 'info');
         modifiedTemplateId = null;
@@ -687,6 +699,24 @@ function resetTemplateToDefault() {
 
 function getActiveTemplateId() {
     return modifiedTemplateId || selectedExperiment;
+}
+
+// Test API call function
+async function testAPICall() {
+    if (!currentExperimentId) {
+        alert('No experiment ID available');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`http://localhost:8000/experiments/${currentExperimentId}/conversations`);
+        const data = await response.json();
+        console.log('Raw API response:', data);
+        alert(`API Response: ${JSON.stringify(data, null, 2)}`);
+    } catch (error) {
+        console.error('Test API call failed:', error);
+        alert(`API Error: ${error.message}`);
+    }
 }
 
 function handleExperimentUpdate(data) {
@@ -1017,78 +1047,155 @@ async function generateReport() {
 
 async function generateBackendReport() {
     try {
-        showNotification('Generating AI analysis report...', 'info');
+        showNotification('Generating analysis report...', 'info');
         
-        // Get experiment result from backend
-        const result = await experimentAPI.getExperimentResult(currentExperimentId);
+        // Get experiment details and results
+        const [experimentDetails, result, conversations] = await Promise.all([
+            experimentAPI.getExperiment(currentExperimentId),
+            experimentAPI.getExperimentResult(currentExperimentId).catch(() => null),
+            experimentAPI.getConversations(currentExperimentId)
+        ]);
         
-        if (result && result.raw_report) {
-            displayBackendReport(result.raw_report);
-            showNotification('Report generated successfully!', 'success');
-        } else {
-            throw new Error('No report data available');
-        }
+        displayExperimentReport(experimentDetails, result, conversations);
+        showNotification('Report generated successfully!', 'success');
+        
     } catch (error) {
-        console.error('Failed to generate backend report:', error);
-        showNotification('Report generation failed - using local analysis', 'warning');
-        setTimeout(() => {
-            analyzeConversation();
-        }, 1000);
+        console.error('Failed to generate report:', error);
+        showNotification('Report generation failed', 'warning');
+        displayErrorReport(error);
     }
 }
 
-function displayBackendReport(rawReport) {
-    // Parse the raw report and display it
-    const reportSections = parseRawReport(rawReport);
-    
-    // Update Executive Summary
-    document.getElementById('executive-summary').innerHTML = `
-        <p><strong>Experiment Type:</strong> ${getExperimentName(selectedExperiment)}</p>
-        <p><strong>Experiment ID:</strong> ${currentExperimentId}</p>
-        <p><strong>Analysis:</strong> AI Moderator Report</p>
-        <p style="margin-top: 15px;">${reportSections.summary}</p>
-    `;
-    
-    // Update sections with parsed content
-    if (reportSections.takeaways.length > 0) {
-        const takeawaysHtml = reportSections.takeaways.map(takeaway => `
-            <div class="key-takeaway">
-                <div class="takeaway-icon takeaway-neutral">📊</div>
-                <div class="takeaway-content">
-                    <div class="takeaway-title">Key Insight</div>
-                    <div class="takeaway-desc">${takeaway}</div>
-                </div>
+function displayExperimentReport(experiment, result, conversations) {
+    // Display experiment configuration
+    const templateData = getTemplateData(selectedExperiment);
+    document.getElementById('experiment-config').innerHTML = `
+        <div class="config-grid">
+            <div class="config-item">
+                <div class="config-label">Template ID</div>
+                <div class="config-value">${getActiveTemplateId()}</div>
             </div>
-        `).join('');
-        document.getElementById('key-takeaways').innerHTML = takeawaysHtml;
-    }
-    
-    if (reportSections.recommendations.length > 0) {
-        const recommendationsHtml = reportSections.recommendations.map(rec => `
-            <div class="recommendation-card">
-                <div class="recommendation-header">
-                    <span>💡</span>
-                    <span class="recommendation-title">Recommendation</span>
-                </div>
-                <div class="recommendation-text">${rec}</div>
+            <div class="config-item">
+                <div class="config-label">Experiment Type</div>
+                <div class="config-value">${getExperimentName(selectedExperiment)}</div>
             </div>
-        `).join('');
-        document.getElementById('recommendations').innerHTML = recommendationsHtml;
-    }
-    
-    // Display the full report in critical moments
-    document.getElementById('critical-moments').innerHTML = `
-        <div class="timeline-event">
-            <div class="timeline-marker">📝</div>
-            <div class="timeline-content">
-                <div class="timeline-description">
-                    <strong>Full AI Analysis:</strong><br>
-                    <div style="white-space: pre-wrap; margin-top: 10px; font-size: 14px; line-height: 1.6;">
-                        ${rawReport}
-                    </div>
-                </div>
+            <div class="config-item">
+                <div class="config-label">Experiment ID</div>
+                <div class="config-value">${currentExperimentId}</div>
+            </div>
+            <div class="config-item">
+                <div class="config-label">Status</div>
+                <div class="config-value">${experiment?.status || 'Unknown'}</div>
+            </div>
+            <div class="config-item">
+                <div class="config-label">Rounds</div>
+                <div class="config-value">${templateData?.template_data?.rounds || 'N/A'}</div>
+            </div>
+            <div class="config-item">
+                <div class="config-label">Conversations per Round</div>
+                <div class="config-value">${templateData?.template_data?.conversations_per_round || 'N/A'}</div>
             </div>
         </div>
+        
+        <div class="faction-summary">
+            <h4>Agent Factions</h4>
+            ${Object.entries(templateData?.template_data?.factions || {}).map(([name, faction]) => `
+                <div class="faction-item">
+                    <strong>${name.replace('_', ' ')}</strong>: ${faction.agent_count} agents
+                </div>
+            `).join('')}
+        </div>
+    `;
+    
+    // Display results summary
+    const totalConversations = conversations.reduce((sum, day) => sum + day.conversations.length, 0);
+    const totalDays = conversations.length;
+    const uniqueAgents = new Set();
+    conversations.forEach(day => {
+        day.conversations.forEach(conv => {
+            uniqueAgents.add(conv.agent_1);
+            uniqueAgents.add(conv.agent_2);
+        });
+    });
+    
+    document.getElementById('results-summary').innerHTML = `
+        <div class="stats-grid">
+            <div class="stat-item">
+                <div class="stat-number">${totalDays}</div>
+                <div class="stat-label">Days Simulated</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">${totalConversations}</div>
+                <div class="stat-label">Total Conversations</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">${uniqueAgents.size}</div>
+                <div class="stat-label">Active Agents</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">${Math.round(totalConversations / totalDays)}</div>
+                <div class="stat-label">Avg Conversations/Day</div>
+            </div>
+        </div>
+        
+        <div class="conversation-breakdown">
+            <h4>Daily Breakdown</h4>
+            ${conversations.map(day => `
+                <div class="day-stat">
+                    Day ${day.day}: ${day.conversations.length} conversations
+                </div>
+            `).join('')}
+        </div>
+    `;
+    
+    // Display AI analysis if available
+    if (result && result.raw_report) {
+        const formattedReport = formatAIReport(result.raw_report);
+        document.getElementById('ai-analysis').innerHTML = `
+            <div class="analysis-content">
+                ${formattedReport}
+            </div>
+        `;
+    } else {
+        document.getElementById('ai-analysis').innerHTML = `
+            <div class="no-analysis">
+                <p>AI analysis not yet available. The moderator analysis may still be processing.</p>
+            </div>
+        `;
+    }
+}
+
+function formatAIReport(rawReport) {
+    // Clean and format the raw report text
+    let formatted = rawReport
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Bold text
+        .replace(/---+/g, '<hr class="report-divider">') // Horizontal rules
+        .replace(/^\*\s+(.+)$/gm, '<li>$1</li>') // Bullet points
+        .replace(/^(\d+)\.\s+(.+)$/gm, '<div class="numbered-section"><span class="section-number">$1.</span> $2</div>') // Numbered sections
+        .replace(/\n\n/g, '</p><p>') // Paragraphs
+        .replace(/^\s*-\s+(.+)$/gm, '<div class="bullet-point">• $1</div>'); // Dash bullets
+    
+    // Wrap in paragraphs if not already structured
+    if (!formatted.includes('<p>') && !formatted.includes('<div>')) {
+        formatted = '<p>' + formatted + '</p>';
+    }
+    
+    return `
+        <div class="formatted-report">
+            ${formatted}
+        </div>
+    `;
+}
+
+function displayErrorReport(error) {
+    document.getElementById('experiment-config').innerHTML = `
+        <div class="error-message">Failed to load experiment configuration: ${error.message}</div>
+    `;
+    document.getElementById('results-summary').innerHTML = `
+        <div class="error-message">Failed to load results summary</div>
+    `;
+    document.getElementById('ai-analysis').innerHTML = `
+        <div class="error-message">Failed to load AI analysis</div>
     `;
 }
 
@@ -1467,15 +1574,45 @@ function startLiveConversationPolling() {
         clearInterval(window.livePollingInterval);
     }
     
-    // Poll every 3 seconds for live updates
+    // Poll every 2 seconds for live updates
     window.livePollingInterval = setInterval(async () => {
         if (currentExperimentId && currentStep === 4) {
             await updateLiveConversations();
+            await checkExperimentStatus();
         }
-    }, 3000);
+    }, 2000);
     
     // Initial load
     updateLiveConversations();
+}
+
+let notificationShown = false;
+
+async function checkExperimentStatus() {
+    try {
+        const status = await experimentAPI.getExperimentStatus(currentExperimentId);
+        
+        if ((status.status === 'completed' || status.status === 'failed') && !notificationShown) {
+            notificationShown = true;
+            showNotification(`Experiment ${status.status}!`, status.status === 'completed' ? 'success' : 'error');
+            
+            // Show generate report button
+            const actionsDiv = document.querySelector('.actions');
+            if (!document.getElementById('reportBtn')) {
+                const reportBtn = document.createElement('button');
+                reportBtn.id = 'reportBtn';
+                reportBtn.className = 'btn btn-primary';
+                reportBtn.innerHTML = '📊 Generate Report';
+                reportBtn.onclick = generateReport;
+                actionsDiv.appendChild(reportBtn);
+            }
+        }
+        
+        return true; // Continue polling
+    } catch (error) {
+        console.error('Failed to check experiment status:', error);
+        return true;
+    }
 }
 
 async function updateLiveConversations() {
@@ -1486,23 +1623,63 @@ async function updateLiveConversations() {
         }
         
         const conversations = await experimentAPI.getConversations(currentExperimentId);
+        window.lastConversations = conversations; // Store for tab switching
         displayLiveConversations(conversations);
-        
-        // Also try to get experiment results for additional context
-        try {
-            const result = await experimentAPI.getExperimentResult(currentExperimentId);
-            if (result && result.raw_report) {
-                updateExperimentStatus(result);
-            }
-        } catch (resultError) {
-            // Results might not be available yet, that's ok
-            console.log('Experiment results not yet available');
-        }
+        updateAgentNamesDisplay(conversations);
         
     } catch (error) {
         console.error('Failed to fetch live conversations:', error);
         showConversationError(error);
     }
+}
+
+function updateAgentNamesDisplay(conversations) {
+    if (!conversations || conversations.length === 0) return;
+    
+    // Extract unique agent names from conversations
+    const agentNames = new Set();
+    conversations.forEach(dayData => {
+        dayData.conversations.forEach(conv => {
+            agentNames.add(conv.agent_1);
+            agentNames.add(conv.agent_2);
+        });
+    });
+    
+    // Update agent grid with actual participant names
+    const agentGrid = document.getElementById('agentGrid');
+    agentGrid.innerHTML = '';
+    
+    Array.from(agentNames).forEach(agentName => {
+        const agentBox = document.createElement('div');
+        agentBox.className = 'agent-box active';
+        agentBox.id = `agent-${agentName}`;
+        
+        // Determine agent color/icon based on faction
+        let color = '#3b82f6';
+        let icon = '👤';
+        
+        // Check if agent name suggests coffee faction
+        if (selectedExperiment === 'coffee_misinformation') {
+            // For coffee experiment, use name patterns or default colors
+            color = agentNames.size % 2 === Array.from(agentNames).indexOf(agentName) % 2 ? '#10b981' : '#ef4444';
+            icon = agentNames.size % 2 === Array.from(agentNames).indexOf(agentName) % 2 ? '☕' : '🚫';
+        } else {
+            // For social engineering
+            color = agentNames.size % 2 === Array.from(agentNames).indexOf(agentName) % 2 ? '#3b82f6' : '#ef4444';
+            icon = agentNames.size % 2 === Array.from(agentNames).indexOf(agentName) % 2 ? '👤' : '🕵️';
+        }
+        
+        agentBox.innerHTML = `
+            <div class="agent-avatar" style="background: ${color}">
+                ${icon}
+            </div>
+            <div class="agent-name">${agentName}</div>
+            <div class="agent-role">Active</div>
+        `;
+        agentGrid.appendChild(agentBox);
+        
+        agents[agentName] = { color, icon };
+    });
 }
 
 function showConversationError(error) {
@@ -1532,9 +1709,12 @@ function updateExperimentStatus(result) {
     }
 }
 
+let currentView = 'days'; // 'days' or 'conversations'
+let selectedDay = 1;
+let autoScroll = true;
+
 function displayLiveConversations(conversations) {
     const chatPanel = document.getElementById('chatPanel');
-    chatPanel.innerHTML = '';
     
     if (!conversations || conversations.length === 0) {
         chatPanel.innerHTML = `
@@ -1542,32 +1722,179 @@ function displayLiveConversations(conversations) {
                 <div class="loading">
                     <div class="spinner"></div>
                     <p>Waiting for agents to start conversing...</p>
+                    <p style="font-size: 12px; color: #999;">Checking experiment: ${currentExperimentId}</p>
                 </div>
             </div>
         `;
         return;
     }
     
-    conversations.forEach(dayData => {
-        // Add day header
-        const dayHeader = document.createElement('div');
-        dayHeader.className = 'day-header';
-        dayHeader.innerHTML = `
-            <div class="day-separator">
-                <span class="day-label">📅 Day ${dayData.day}</span>
-                <span class="conversation-count">${dayData.conversations.length} conversations</span>
-            </div>
-        `;
-        chatPanel.appendChild(dayHeader);
+    // Create main navigation
+    chatPanel.innerHTML = `
+        <div class="chat-navigation">
+            <button class="nav-btn ${currentView === 'days' ? 'active' : ''}" onclick="switchView('days')">
+                📅 By Days
+            </button>
+            <button class="nav-btn ${currentView === 'conversations' ? 'active' : ''}" onclick="switchView('conversations')">
+                💬 By Conversations
+            </button>
+            <button class="scroll-btn ${autoScroll ? 'active' : ''}" onclick="toggleAutoScroll()">
+                ${autoScroll ? '🔒' : '📜'} Auto-scroll
+            </button>
+        </div>
+        <div class="chat-container" id="chat-container"></div>
+    `;
+    
+    if (currentView === 'days') {
+        displayByDays(conversations);
+    } else {
+        displayByConversations(conversations);
+    }
+}
+
+function displayByDays(conversations) {
+    const container = document.getElementById('chat-container');
+    
+    container.innerHTML = `
+        <div class="day-tabs" id="day-tabs"></div>
+        <div class="day-content" id="day-content"></div>
+    `;
+    
+    const dayTabs = document.getElementById('day-tabs');
+    const dayContent = document.getElementById('day-content');
+    
+    // Create day tabs
+    conversations.forEach((dayData, index) => {
+        const dayTab = document.createElement('div');
+        dayTab.className = `day-tab ${dayData.day === selectedDay ? 'active' : ''}`;
+        dayTab.innerHTML = `Day ${dayData.day} (${dayData.conversations.length})`;
+        dayTab.onclick = () => switchDay(dayData.day);
+        dayTabs.appendChild(dayTab);
+    });
+    
+    // Show selected day content
+    const selectedDayData = conversations.find(d => d.day === selectedDay) || conversations[0];
+    if (selectedDayData) {
+        selectedDay = selectedDayData.day;
         
-        // Display one-to-one conversations
-        dayData.conversations.forEach((conv, index) => {
-            addOneToOneMessage(conv, dayData.day, index);
+        dayContent.innerHTML = '';
+        selectedDayData.conversations.forEach(conv => {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'conversation-message';
+            messageDiv.innerHTML = `
+                <div class="message-header">
+                    <span class="message-speaker">${conv.agent_1} → ${conv.agent_2}</span>
+                    <span class="message-meta">#${conv.sequence_no}</span>
+                </div>
+                <div class="message-text">${conv.text}</div>
+            `;
+            dayContent.appendChild(messageDiv);
+        });
+        
+        if (autoScroll) {
+            dayContent.scrollTop = dayContent.scrollHeight;
+        }
+    }
+}
+
+function displayByConversations(conversations) {
+    const container = document.getElementById('chat-container');
+    
+    // Group by conversation pairs
+    const conversationPairs = {};
+    conversations.forEach(dayData => {
+        dayData.conversations.forEach(conv => {
+            const pairKey = [conv.agent_1, conv.agent_2].sort().join(' ↔ ');
+            if (!conversationPairs[pairKey]) {
+                conversationPairs[pairKey] = [];
+            }
+            conversationPairs[pairKey].push({...conv, day: dayData.day});
         });
     });
     
-    // Auto-scroll to bottom
-    chatPanel.scrollTop = chatPanel.scrollHeight;
+    container.innerHTML = `
+        <div class="conversation-tabs" id="conversation-tabs"></div>
+        <div class="conversation-content" id="conversation-content"></div>
+    `;
+    
+    const convTabs = document.getElementById('conversation-tabs');
+    const convContent = document.getElementById('conversation-content');
+    
+    // Create conversation tabs
+    const pairKeys = Object.keys(conversationPairs);
+    pairKeys.forEach((pairKey, index) => {
+        const shortNames = pairKey.split(' ↔ ').map(name => name.split(' ')[0]).join(' ↔ ');
+        
+        const convTab = document.createElement('div');
+        convTab.className = `conversation-tab ${index === 0 ? 'active' : ''}`;
+        convTab.innerHTML = `${shortNames} (${conversationPairs[pairKey].length})`;
+        convTab.onclick = () => switchConversation(index, pairKeys);
+        convTabs.appendChild(convTab);
+    });
+    
+    // Show first conversation by default
+    if (pairKeys.length > 0) {
+        showConversationContent(conversationPairs[pairKeys[0]], convContent);
+    }
+}
+
+function switchView(view) {
+    currentView = view;
+    const conversations = window.lastConversations || [];
+    displayLiveConversations(conversations);
+}
+
+function switchDay(day) {
+    selectedDay = day;
+    const conversations = window.lastConversations || [];
+    displayByDays(conversations);
+}
+
+function switchConversation(index, pairKeys) {
+    document.querySelectorAll('.conversation-tab').forEach(tab => tab.classList.remove('active'));
+    document.querySelectorAll('.conversation-tab')[index].classList.add('active');
+    
+    const conversationPairs = {};
+    const conversations = window.lastConversations || [];
+    conversations.forEach(dayData => {
+        dayData.conversations.forEach(conv => {
+            const pairKey = [conv.agent_1, conv.agent_2].sort().join(' ↔ ');
+            if (!conversationPairs[pairKey]) {
+                conversationPairs[pairKey] = [];
+            }
+            conversationPairs[pairKey].push({...conv, day: dayData.day});
+        });
+    });
+    
+    const convContent = document.getElementById('conversation-content');
+    showConversationContent(conversationPairs[pairKeys[index]], convContent);
+}
+
+function showConversationContent(messages, container) {
+    container.innerHTML = '';
+    messages.forEach(conv => {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'conversation-message';
+        messageDiv.innerHTML = `
+            <div class="message-header">
+                <span class="message-speaker">${conv.agent_1}</span>
+                <span class="message-meta">Day ${conv.day} • #${conv.sequence_no}</span>
+            </div>
+            <div class="message-text">${conv.text}</div>
+        `;
+        container.appendChild(messageDiv);
+    });
+    
+    if (autoScroll) {
+        container.scrollTop = container.scrollHeight;
+    }
+}
+
+function toggleAutoScroll() {
+    autoScroll = !autoScroll;
+    const scrollBtn = document.querySelector('.scroll-btn');
+    scrollBtn.className = `scroll-btn ${autoScroll ? 'active' : ''}`;
+    scrollBtn.innerHTML = `${autoScroll ? '🔒' : '📜'} Auto-scroll`;
 }
 
 function addOneToOneMessage(conversation, day, sequenceNo) {
