@@ -18,8 +18,21 @@ class LettaAgent(AgentInterface):
     ):
         super().__init__(agent_id, name, faction_prompt, personal_prompt, powers, role)
         self.client = Letta(
-            token="sk-let-MDdiNTEzOWYtODU1Ni00NjY5LWI0MzctMTU1ZWFjMmU5ODU1OmZlZmQyN2IwLWQ3NTgtNDZlMi04M2E3LTUyZjIzOGRjYzE3NA=="
+            token="sk-let-Y2M3OGNlMzQtMWRhNC00NDgxLWE5YjMtYTJhOGE3M2VkMzAyOjhmYzExNWY2LWMwYTAtNDQ2YS05ZTFkLWVlZmI2MThmMDI0Yg=="
         )
+        #2 2. sk-let-N2E4ZDJmM2YtZjM0My00YzBhLWJmODMtZDNiMDgzM2E3YjU3OjAwYTczNGIxLTRjNjQtNGUzNy04NjBlLTQwNmI0YmNmNDQ2Yg==
+        # sk-let-ZjFhNzEyNGItYTA2Ny00ZTdiLWE1NzMtYmU4N2Y5YjIwOWU3OjNiM2ViYzcyLTMxNDUtNDc1ZS04MDE0LWM0OGRlNzUzMTg4NA==
+        # sk-let-ZjFhNzEyNGItYTA2Ny00ZTdiLWE1NzMtYmU4N2Y5YjIwOWU3OmU1Zjk1ZmFiLTQ4NDAtNGYwZi1hMmJiLWY3OTY5NWNmZDJkNg==
+        # sk-let-ZjFhNzEyNGItYTA2Ny00ZTdiLWE1NzMtYmU4N2Y5YjIwOWU3OjMxYWI2ZTIzLTE4MmMtNDczZS1hYjZmLTg5MzZmM2RlM2Y4NA==
+        # sk-let-ZjFhNzEyNGItYTA2Ny00ZTdiLWE1NzMtYmU4N2Y5YjIwOWU3OjBmZmFmMzIwLWYwN2MtNDY2Ny1hYTE3LWUyNjc2NTA5YmVlMw==
+        # sk-let-OTQ0YjQyODEtOGJmOS00MmE0LTk1NjUtYWIwOWUwZTE2MWI0OmE4MGVhNjMzLTljYjItNDRhYi1hYjNmLWJlMDhjNzM0OTg0Mw==
+        # sk-let-OTQ0YjQyODEtOGJmOS00MmE0LTk1NjUtYWIwOWUwZTE2MWI0OmUxMmE1MGRkLTkzNDAtNGRmOC1iMjU2LTY0M2FlNmFmZjE0Mg==
+        # sk-let-OTQ0YjQyODEtOGJmOS00MmE0LTk1NjUtYWIwOWUwZTE2MWI0OjU4Nzg2Y2NiLWU5ZTMtNGNlYS1iZDAzLTNhMDI3ZGM0NDM2OQ==
+        # sk-let-NWNiMjI3NDMtZjEzNC00OTM4LWE2MjctNTcyZTMyMzY4NWUxOjJlYzU3NmU2LTRkOTktNDI1Yi05ZTJmLWY1MDg2NmVkYTQ0OQ==
+        # sk-let-NWNiMjI3NDMtZjEzNC00OTM4LWE2MjctNTcyZTMyMzY4NWUxOjBlYzljODczLTQ2NjEtNGZmMi1hMjliLTdjYWIwYjYxNzI0OQ==
+        # sk-let-NWNiMjI3NDMtZjEzNC00OTM4LWE2MjctNTcyZTMyMzY4NWUxOmVjNWIzM2VjLTNhZTItNGE2Ny05YzQxLTBiZWNiYzU0NjNjNw==
+        
+        #paid one  sk-let-MDdiNTEzOWYtODU1Ni00NjY5LWI0MzctMTU1ZWFjMmU5ODU1OmZlZmQyN2IwLWQ3NTgtNDZlMi04M2E3LTUyZjIzOGRjYzE3NA==
         self.agent = self.client.agents.create(
             model="openai/gpt-4.1",
             embedding="openai/text-embedding-3-small",
@@ -36,7 +49,7 @@ class LettaAgent(AgentInterface):
     def send_message_to(self, other: "LettaAgent", context: str = "") -> str:
         """Generate a message to send to another agent"""
         response = self.client.agents.messages.create(
-            agent_id=other.agent.id,
+            agent_id=self.agent.id,
             messages=[{"role": "user", "content": f"{context} "}],
         )
         if response and response.messages:

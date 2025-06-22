@@ -125,13 +125,13 @@ echo "📍 11. Listing All Experiments (should be empty initially)"
 curl -s "$BASE_URL/experiments" | jq '.'
 echo -e "\n"
 
-echo "📍 12. Starting First Experiment - Political Debate"
+echo "📍 12. Starting First Experiment - coffee_misinformation"
 EXPERIMENT_1=$(curl -s -X POST "$BASE_URL/run_experiment" \
   -H "Content-Type: application/json" \
   -d '{
     "template_id": "coffee_misinformation",
-    "rounds": 2,
-    "conversations_per_round": 3
+    "rounds": 5,
+    "conversations_per_round": 6
   }' | jq -r '.experiment_id')
 
 echo "Started experiment: $EXPERIMENT_1"
